@@ -7,12 +7,23 @@ import User from './models/Users.js';            // not Users
 import Deal from './models/Deals.js';           // capital D, plural ok
 import Distribution from "./models/Distributions.js"; 
 import Country from "./models/Countries.js";    // capital C, plural ok
+import Investor from "./models/Investor.js";
+import Sector from "./models/Sector.js";
+import SubSector from "./models/Sector.js";
+import Transaction from "./models/Transaction.js";
+import FinanceHistroty from "./models/FinancialHistory.js";
+
 
 // Routers
 import usersRoute from "./routes/users.route.js";
 import dealsRoute from "./routes/deals.route.js";
 import distributionsRoute from "./routes/distributions.route.js";
 import countriesRoute from "./routes/countries.route.js";
+import investorsRoute from "./routes/investors.route.js";
+import sectorsRoute from "./routes/sectors.route.js";
+import subsectorsRoute from "./routes/subSectors.route.js";
+import transactionsRoute from "./routes/transactions.route.js";
+import financialHistoriesRoute from "./routes/financialHistory.route.js";
 
 
 
@@ -37,6 +48,11 @@ app.use("/users", usersRoute);
 app.use("/deals", dealsRoute);
 app.use("/distributions", distributionsRoute);
 app.use("/countries", countriesRoute);
+app.use("/investors", investorsRoute);
+app.use("/sectors", sectorsRoute);
+app.use("/subSectors", subsectorsRoute);
+app.use("/transactions", transactionsRoute);
+app.use("/financial-histories", financialHistoriesRoute);
 
 
 
