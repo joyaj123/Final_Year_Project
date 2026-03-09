@@ -12,6 +12,10 @@ import Sector from "./models/Sector.js";
 import SubSector from "./models/Sector.js";
 import Transaction from "./models/Transaction.js";
 import FinanceHistroty from "./models/FinancialHistory.js";
+import Company from "./models/company.js";
+import Ownership from "./models/ownership.js";
+import AuditLogs from "./models/audit_Logs.js";
+import Notification from "./models/notification.js";
 
 
 // Routers
@@ -24,7 +28,10 @@ import sectorsRoute from "./routes/sectors.route.js";
 import subsectorsRoute from "./routes/subSectors.route.js";
 import transactionsRoute from "./routes/transactions.route.js";
 import financialHistoriesRoute from "./routes/financialHistory.route.js";
-
+import companyRoute from "./routes/companies.route.js";
+import ownershipRoute from "./routes/ownership.route.js";
+import auditLogsRoute from "./routes/audit_Logs.route.js";
+import notificationRoute from "./routes/notification.route.js";
 
 
 /* FOR DEBBUGING EZA 3EZTA BA3DEN 
@@ -53,7 +60,10 @@ app.use("/sectors", sectorsRoute);
 app.use("/subSectors", subsectorsRoute);
 app.use("/transactions", transactionsRoute);
 app.use("/financial-histories", financialHistoriesRoute);
-
+app.use("/company", companyRoute);
+app.use("/ownership", ownershipRoute);
+app.use("/audit-logs", auditLogsRoute);
+app.use("/notifications", notificationRoute);
 
 
 // MongoDB Connection
