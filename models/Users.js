@@ -33,7 +33,7 @@ const userSchema = new mongoose.Schema({
     street: { type: String },
     city: { type: String },
     state: { type: String },
-    country: { type: String, required: true },
+    country: { type: mongoose.Schema.Types.ObjectId , ref : "Countries" ,  required: true },
     postalCode: { type: String }
   },
 
