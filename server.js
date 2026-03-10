@@ -3,10 +3,10 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 dotenv.config();
 
-import User from './models/Users.js';            // not Users
-import Deal from './models/Deals.js';           // capital D, plural ok
-import Distribution from "./models/Distributions.js"; 
-import Country from "./models/Countries.js";    // capital C, plural ok
+import User from './models/users.js';            // not Users
+import Deal from './models/deals.js';           // capital D, plural ok
+import Distribution from "./models/distributions.js"; 
+import Country from "./models/countries.js";    // capital C, plural ok
 import Investor from "./models/Investor.js";
 import Sector from "./models/Sector.js";
 import SubSector from "./models/Sector.js";
