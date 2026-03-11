@@ -1,5 +1,5 @@
 import User from "../models/Users.js"
-import bcrypt from "bcrypt" 
+import bcrypt from "bcrypt";
 
 const getAllUsers = async (req, res) => {
   try {
@@ -90,21 +90,32 @@ const deleteUser = async (req, res) => {
 };
 
 
-userSchema.pre("save", async function (next) {
-  // Hash password if it was modified or is new
-  if (this.isModified("passwordHash")) {
-    const saltRounds = 10;
-    this.passwordHash = await bcrypt.hash(this.passwordHash, saltRounds);
+export const loginUser = async (req,res) =>{
+  try{
+    const {email,password} = req.body ; 
+    
+    //find email of the user
+    const user = await User.findOne({email}) ; //bi redele kel al document tb3 hyda al user ma3 this email
+
+    if(!user){
+      return res.status(404).json({message : "Email not found "}) ; 
+    }
+
+    const isMatch = await bcrypt.compare(password, user.passwordHash);
+    if(!isMatch){
+      return res.status(404).json({message : "Wrong password"}) ; 
+    }
+
+    res.status(200).json({
+      message :"Log in successful",
+      user:user 
+    }); 
   }
+  catch (error){
+        res.status(500).json({ message: error.message });
 
-  // Validate country ObjectId
-  if (!mongoose.Types.ObjectId.isValid(this.address.country)) {
-    throw new Error("Invalid country ObjectId");
   }
-
-  next();
-});
-
+} ;
 
 
 export {
