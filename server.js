@@ -3,10 +3,10 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 dotenv.config();
 
-import User from './models/users.js';            // not Users
+/**import User from './models/users.js';            // not Users
 import Deal from './models/deals.js';           // capital D, plural ok
 import Distribution from "./models/distributions.js"; 
-import Country from "./models/countries.js";    // capital C, plural ok
+import Country from "./models/countries.js";    // capital C, plural ok 
 import Investor from "./models/Investor.js";
 import Sector from "./models/Sector.js";
 import SubSector from "./models/Sector.js";
@@ -16,7 +16,7 @@ import Company from "./models/company.js";
 import Ownership from "./models/ownership.js";
 import AuditLogs from "./models/audit_Logs.js";
 import Notification from "./models/notification.js";
-
+*/
 
 // Routers
 import usersRoute from "./routes/users.route.js";
@@ -63,7 +63,7 @@ app.use("/financial-histories", financialHistoriesRoute);
 app.use("/company", companyRoute);
 app.use("/ownership", ownershipRoute);
 app.use("/audit-logs", auditLogsRoute);
-app.use("/notifications", notificationRoute);
+app.use("/notifications", notificationRoute); 
 
 
 // MongoDB Connection
@@ -104,3 +104,5 @@ app.listen(PORT, () => {
   console.log(`   GET  http://localhost:${PORT}/users`);
   console.log(`   GET  http://localhost:${PORT}/deals`);
 });
+
+//ALWAYS RUN SERVER.JS THAN GO TO LOCAL HOST TO CHECK THE ROOT THAN SEND REQUESTS 

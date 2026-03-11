@@ -135,7 +135,7 @@ const dealSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-/*
+
 
 // Pre-save middleware
 dealSchema.pre('save', async function(next) {
@@ -197,7 +197,7 @@ dealSchema.pre('findOneAndUpdate', async function(next) {
     next(error);
   }
 });
-*/
+
 const Deal = mongoose.model("Deal", dealSchema);
 
 export default Deal;

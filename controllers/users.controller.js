@@ -1,9 +1,9 @@
-import User from "../models/Users.js";
+import User from "../models/Users.js"
 import bcrypt from "bcrypt" 
 
 const getAllUsers = async (req, res) => {
   try {
-    const users = await User.find({});
+    const users = await User.find({}).populate("address.country","name");
     res.status(200).json(users);
   } catch (error) {
     console.error('Error fetching users:', error);
@@ -13,7 +13,9 @@ const getAllUsers = async (req, res) => {
 
 const getUser = async (req, res) => {
   try {
-    const user = await User.findById(req.params.id);
+    const user = await User.findById(req.params.id)
+    .populate("address.country","name");
+
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -86,6 +88,24 @@ const deleteUser = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+
+userSchema.pre("save", async function (next) {
+  // Hash password if it was modified or is new
+  if (this.isModified("passwordHash")) {
+    const saltRounds = 10;
+    this.passwordHash = await bcrypt.hash(this.passwordHash, saltRounds);
+  }
+
+  // Validate country ObjectId
+  if (!mongoose.Types.ObjectId.isValid(this.address.country)) {
+    throw new Error("Invalid country ObjectId");
+  }
+
+  next();
+});
+
+
 
 export {
   getAllUsers,

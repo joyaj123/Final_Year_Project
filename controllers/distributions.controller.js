@@ -2,7 +2,16 @@ import Distribution from "../models/Distributions.js";
 
 const getAllDistributions = async (req, res) => {
   try {
-    const distributions = await Distribution.find({});
+    const distributions = await Distribution.find({})
+    .populate("companyId" , "name")
+     .populate({
+        path: 'payouts.investorId',
+        populate: {
+          path: 'userId',
+          select: 'name'
+        }
+      }) 
+    .populate("payouts.transactionId" , "transactionNumber");
     res.status(200).json(distributions);
   } catch (error) {
     console.error("ERROR IN FETCHING DISTRIBUTIONS", error);
@@ -23,7 +32,17 @@ const postDistribution = async (req, res) => {
 
 const getDistribution = async (req, res) => {
   try {
-    const distribution = await Distribution.findById(req.params.id);
+    const distribution = await Distribution.findById(req.params.id)
+    .populate("companyId" , "name")
+     .populate({
+        path: 'payouts.investorId',
+        populate: {
+          path: 'userId',
+          select: 'name'
+        }
+      }) 
+    .populate("payouts.transactionId" , "transactionNumber");
+
     if (!distribution) {
       return res.status(404).json({ message: "Distribution not found" });
     }
