@@ -33,7 +33,19 @@ const userSchema = new mongoose.Schema({
     street: { type: String },
     city: { type: String },
     state: { type: String },
-    country: { type: mongoose.Schema.Types.ObjectId , ref : "Countries" ,  required: true },
+    country: { 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: "countries",  
+    required: true,
+    validate: {
+      validator: async function(value) {
+        const Country = mongoose.model('countries');
+        const country = await Country.findById(value);
+        return !!country; // Returns true if country exists
+      },
+      message: 'Country with ID {VALUE} does not exist'
+    }
+  },
     postalCode: { type: String }
   },
 

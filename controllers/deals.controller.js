@@ -36,7 +36,7 @@ const getAllDeal = async (req, res) => {
 const getDeal = async (req, res) => {
   try {
     const deal = await Deal.findById(req.params.id)
-      .populate("investorId", "name email")
+      .populate("investorId", "name email") //to fetch the investorId that is localted in the collection investor
       .populate("companyId", "name sectorId")
       .populate("companySnapshot.sectorId", "name")
       .populate("payment.transactionId", "amount method")
@@ -66,11 +66,10 @@ const putDeal = async (req, res) => {
       return res.status(404).json({ message: "Deal not found" });
     }
 
-    // Optionally populate after update
     const updatedDeal = await Deal.findById(deal._id)
-      .populate("investorId", "name email")
+      .populate("investorId", "name email") //to fetch the name and email that is localted in the collection investor with the investorID equal to the one in deals
       .populate("companyId", "name sectorId")
-      .populate("companySnapshot.sectorId", "name")
+      .populate("companySnapshot.sectorId", "name")//select comapnySnapshot.sectorId from sector id where invetorId = deal.investorId
       .populate("payment.transactionId", "amount method")
       .populate("adminActions.adminId", "name role");
 
