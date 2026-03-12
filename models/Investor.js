@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const InvestmentSweetSpotSchema = new mongoose.Schema(
+const InvestmentSweetSpotSchema = new mongoose.Schema( //addeh fi yedfa3 2a2ala chi w aktr chi 
   {
     min: { type: Number, required: false },
     max: { type: Number, required: false },
@@ -68,7 +68,7 @@ const SourceOfFundsSchema = new mongoose.Schema(
   { _id: false }
 );
 
-const CompanySchema = new mongoose.Schema(
+const CompanySchema = new mongoose.Schema(//conditional
   {
     name: { type: String, required: false },
     registrationNumber: { type: String, required: false },
@@ -83,7 +83,7 @@ const WalletSchema = new mongoose.Schema(
   {
     balance: { type: mongoose.Schema.Types.Decimal128, required: true, default: 0 },
     currency: { type: String, required: true, default: "USD" }, // ISO 4217
-    lockedBalance: { type: mongoose.Schema.Types.Decimal128, required: true, default: 0 },
+    lockedBalance: { type: mongoose.Schema.Types.Decimal128, default: 0 },
     totalInvested: { type: mongoose.Schema.Types.Decimal128, required: true, default: 0 }, // Calculated
     totalReturns: { type: mongoose.Schema.Types.Decimal128, required: true, default: 0 }, // Calculated
   },
@@ -121,9 +121,8 @@ const investorSchema = new mongoose.Schema(
       index: true,
     },
 
-    accreditationStatus: {
+    accreditationStatus: { 
       type: String,
-      required: true,
       enum: ["PENDING", "VERIFIED", "REJECTED", "EXPIRED"],
       index: true,
     },

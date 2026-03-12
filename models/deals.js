@@ -6,13 +6,7 @@ const dealSchema = new mongoose.Schema(
       type: String,
       required: true,
       unique: true,
-    },
-
-    investorId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "investors",
-      required: true,
-      index: true,
+      trim: true,
     },
 
     companyId: {
@@ -22,20 +16,55 @@ const dealSchema = new mongoose.Schema(
       index: true,
     },
 
+
+    title: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    description: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
     status: {
       type: String,
-      enum: ["PENDING", "CONFIRMED", "COMPLETED", "CANCELLED"],
+      enum: [
+        "DRAFT",
+        "PENDING_REVIEW",
+        "OPEN",
+        "FUNDED",
+        "CLOSED",
+        "CANCELLED",
+      ],
       required: true,
+      default: "DRAFT",
       index: true,
     },
 
-    completedAt: {
-      type: Date,
+    adminStatus: {
+      type: String,
+      enum: ["PENDING", "APPROVED", "REJECTED", "FLAGGED"],
+      required: true,
+      default: "PENDING",
+      index: true,
     },
 
-    // Investment Details (Embedded)
-    investment: {
-      amount: {
+    publishedAt: {
+      type: Date,
+      default: null,
+    },
+
+    closedAt: {
+      type: Date,
+      default: null,
+    },
+
+    // Investment Terms
+    investmentTerms: {
+      targetRaise: {
         type: mongoose.Schema.Types.Decimal128,
         required: true,
       },
@@ -43,20 +72,22 @@ const dealSchema = new mongoose.Schema(
       currency: {
         type: String,
         required: true,
+        trim: true,
+        uppercase: true,
       },
 
-      sharesAcquired: {
-        type: Number,
-        required: true,
-      },
-
-      ownershipPercentage: {
-        type: Number,
-        required: true,
-      },
-
-      pricePerShare: {
+      minInvestment: {
         type: mongoose.Schema.Types.Decimal128,
+        required: true,
+      },
+
+      maxInvestment: {
+        type: mongoose.Schema.Types.Decimal128,
+        default: null,
+      },
+
+      equityOfferedPct: {
+        type: Number,
         required: true,
       },
 
@@ -64,19 +95,15 @@ const dealSchema = new mongoose.Schema(
         type: mongoose.Schema.Types.Decimal128,
         required: true,
       },
-    },
 
-    // Company Snapshot (Denormalized)
-    companySnapshot: {
-      name: {
-        type: String,
-        required: true,
+      pricePerShare: {
+        type: mongoose.Schema.Types.Decimal128,
+        default: null,
       },
 
-      sectorId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "sectors",
-        required: true,
+      totalSharesOffered: {
+        type: Number,
+        default: null,
       },
 
       valuation: {
@@ -84,58 +111,129 @@ const dealSchema = new mongoose.Schema(
         required: true,
       },
 
-      arr: {
-        type: mongoose.Schema.Types.Decimal128,
+      valuationMethod: {
+        type: String,
+        default: null,
+        trim: true,
       },
     },
 
-    // Payment Info (Embedded)
-    payment: {
-      method: {
-        type: String,
-        enum: ["WALLET", "BANK_TRANSFER", "CARD", "CRYPTO"],
+    // Funding Progress
+    fundingProgress: {
+      amountRaised: {
+        type: mongoose.Schema.Types.Decimal128,
+        required: true,
+        default: 0,
+      },
+
+      percentageRaised: {
+        type: Number,
+        required: true,
+        default: 0,
+      },
+
+      investorCount: {
+        type: Number,
+        required: true,
+        default: 0,
+      },
+
+      remainingAmount: {
+        type: mongoose.Schema.Types.Decimal128,
         required: true,
       },
-
-      transactionId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "transactions",
-      },
-
-      paidAt: Date,
-
-      paymentReference: String,
     },
 
-    // Admin Actions (Embedded Array)
-    adminActions: [
-      {
-        adminId: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "admins",
-          required: true,
-        },
-
-        action: {
-          type: String,
-          enum: ["APPROVED", "REJECTED", "FLAGGED", "REVIEWED"],
-          required: true,
-        },
-
-        notes: String,
-
-        timestamp: {
-          type: Date,
-          required: true,
-          default: Date.now,
-        },
+    // Company Snapshot
+    companySnapshot: {
+      name: {
+        type: String,
+        trim: true,
       },
-    ],
+
+      sectorId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "sectors",
+      },
+
+      subsectorId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "subsectors",
+        default: null,
+      },
+
+      country: {
+        type: String,
+        default: null,
+        trim: true,
+      },
+
+      valuation: {
+        type: mongoose.Schema.Types.Decimal128,
+      },
+
+      arr: {
+        type: mongoose.Schema.Types.Decimal128,
+        default: null,
+      },
+
+      ebitda: {
+        type: mongoose.Schema.Types.Decimal128,
+        default: null,
+      },
+
+      revenue: {
+        type: mongoose.Schema.Types.Decimal128,
+        default: null,
+      },
+    },
+
+    // Timeline
+    timeline: {
+      openDate: {
+        type: Date,
+        default: null,
+      },
+
+      closeDate: {
+        type: Date,
+        default: null,
+      },
+
+      fundingDeadline: {
+        type: Date,
+        default: null,
+      },
+    },
+
+    // Admin Review
+    adminReview: {
+      reviewedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "admins",
+        default: null,
+      },
+
+      reviewedAt: {
+        type: Date,
+        default: null,
+      },
+
+      action: {
+        type: String,
+        enum: ["APPROVED", "REJECTED", "FLAGGED"],
+        default: null,
+      },
+
+      notes: {
+        type: String,
+        default: null,
+        trim: true,
+      },
+    },   
   },
   { timestamps: true }
 );
-
-
 
 // Pre-save middleware
 dealSchema.pre('save', async function(next) {
