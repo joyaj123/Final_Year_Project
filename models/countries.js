@@ -29,6 +29,6 @@ const countrySchema = new mongoose.Schema({
   },
 });
 
-const Country = mongoose.model("Country", countrySchema);
+const Country = mongoose.models.countries || mongoose.model("countries", countrySchema);
 
 export default Country;  // 👈 This is crucial for ES modules

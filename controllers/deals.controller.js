@@ -1,4 +1,4 @@
-import Deal from "../models/Deals.js";
+import Deal from "../models/deals.js";
 
 // CREATE a deal
 const postDeal = async (req, res) => {
@@ -18,11 +18,9 @@ const getAllDeal = async (req, res) => {
     console.log("Fetching all deals...");
     
     const deals = await Deal.find()
-      .populate("investorId", "name email") // show only name & email
       .populate("companyId", "name sectorId")
       .populate("companySnapshot.sectorId", "name")
-      .populate("payment.transactionId", "amount method")
-      .populate("adminActions.adminId", "name role");
+      .populate("adminReview.reviewedBy", "name"); // populate admin who reviewed
 
     console.log(`Found ${deals.length} deals`);
     res.status(200).json(deals);
@@ -36,11 +34,9 @@ const getAllDeal = async (req, res) => {
 const getDeal = async (req, res) => {
   try {
     const deal = await Deal.findById(req.params.id)
-      .populate("investorId", "name email") //to fetch the investorId that is localted in the collection investor
       .populate("companyId", "name sectorId")
       .populate("companySnapshot.sectorId", "name")
-      .populate("payment.transactionId", "amount method")
-      .populate("adminActions.adminId", "name role");
+      .populate("adminReview.reviewedBy", "name"); // populate admin who reviewed
 
     if (!deal) {
       return res.status(404).json({ message: "Deal not found" });
@@ -67,11 +63,9 @@ const putDeal = async (req, res) => {
     }
 
     const updatedDeal = await Deal.findById(deal._id)
-      .populate("investorId", "name email") //to fetch the name and email that is localted in the collection investor with the investorID equal to the one in deals
       .populate("companyId", "name sectorId")
-      .populate("companySnapshot.sectorId", "name")//select comapnySnapshot.sectorId from sector id where invetorId = deal.investorId
-      .populate("payment.transactionId", "amount method")
-      .populate("adminActions.adminId", "name role");
+      .populate("companySnapshot.sectorId", "name")
+      .populate("adminReview.reviewedBy", "name"); // populate admin who reviewed
 
     res.status(200).json(updatedDeal);
   } catch (error) {

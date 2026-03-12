@@ -39,5 +39,6 @@ const subSectorSchema = new mongoose.Schema(
   }
 );
 
-const SubSector = mongoose.model("SubSector", subSectorSchema);
+const SubSector = mongoose.models.SubSector || mongoose.model("SubSector", subSectorSchema);
 export default SubSector;
+
