@@ -1,5 +1,6 @@
 import User from "../models/Users.js"
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 
 const getAllUsers = async (req, res) => {
   try {
@@ -106,10 +107,21 @@ export const loginUser = async (req,res) =>{
       return res.status(404).json({message : "Wrong password"}) ; 
     }
 
+    const token = jwt.sign(
+      {
+        id:user._id ,
+        role:user.userType
+      }, 
+      process.env.JWT_SECRET,
+      {expiresIn:"7d"}
+    ) ;
+
     res.status(200).json({
       message :"Log in successful",
-      user:user 
+      token :token,
+      id :user._id
     }); 
+    
   }
   catch (error){
         res.status(500).json({ message: error.message });

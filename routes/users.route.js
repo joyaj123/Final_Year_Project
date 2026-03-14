@@ -1,4 +1,5 @@
 import express from "express";
+import { authMiddleware } from "../middlewar/authMiddlewar.js";
 const router = express.Router();
 
 import {
@@ -15,6 +16,6 @@ router.get("/:id", getUser);
 router.post("/", postUser);
 router.put("/:id", putUser);
 router.delete("/:id", deleteUser);
-router.post("/login", loginUser) ; //If someone sends POST /login → run loginUser() 
+router.post("/login", authMiddleware,loginUser) ; //If someone sends POST /login → run loginUser() 
 
 export default router;
