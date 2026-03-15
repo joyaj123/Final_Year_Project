@@ -11,7 +11,7 @@ const transactionSchema = new mongoose.Schema(
 
     type: {
       type: String,
-      enum: ["DEPOSIT", "WITHDRAWAL", "INVESTMENT", "DISTRIBUTION", "TRANSFER"],
+      enum: ["DEPOSIT", "WITHDRAWAL", "INVESTMENT", "DISTRIBUTION"],
       required: true,
       index: true
     },
@@ -90,7 +90,7 @@ const transactionSchema = new mongoose.Schema(
     },
 
     paymentDetails: {
-      method: {
+      method: { //here for deposit from bank_transfer 
         type: String,
         enum: ["BANK_TRANSFER", "CARD", "CRYPTO", "WALLET", "ACH", "WIRE"],
         required: true

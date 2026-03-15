@@ -1,75 +1,116 @@
 import mongoose from "mongoose";
 
-const notificationSchema = new mongoose.Schema({
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-    required: true,
-    index: true},
-type: {
-   type: String,
-   enum: ["DEAL_CONFIRMED","DISTRIBUTION","KYC_UPDATE","NEW_DEAL","PAYMENT_RECEIVED"],
-   required: true,
-   index: true
 
-},
-title: {
-    type: String,
-    required: true,
-    trim: true
+const ownershipRecordSchema = new mongoose.Schema(
+  {
+    investorId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "investors",
+      required: true,
+    },
 
-},
-message: {
-  type: String,
-  required: true
-},
-isRead: {
-  type: Boolean,
-  required: true,
-  default: false,
-  index: true
-},
-readAt: {
-  type: Date
-},
-expiresAt: {
-   type: Date,
-  index: { expires: 0 }
-},
-actionUrl: {
-   type: String
-},
-relatedEntity: {
- type: { type: String},
- id: {type: mongoose.Schema.Types.ObjectId}
+    companyId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "companies",
+      required: true,
+    },
 
-},
-channels: {
-  email: {type: Boolean,
-         required: true,
-         default: false},
-   push: {type: Boolean,
-         required: true,
-         default: false},
-   sms: {type: Boolean,
-         required: true,
-        default: false}
-}
+    status: {
+      type: String,
+      enum: ["ACTIVE", "TRANSFERRED", "LIQUIDATED"],
+      required: true,
+    },
 
-},
-{timestamps: { createdAt: true, updatedAt: false }}
+    createdAt: {
+      type: Date,
+      required: true,
+    },
+
+    updatedAt: {
+      type: Date,
+      required: true,
+    },
+
+    // Ownership Details
+    totalShares: {
+      type: Number,
+      required: true,
+    },
+
+    ownershipPercentage: {
+      type: Number,
+      required: true,
+    },
+
+    totalInvested: {
+      type: mongoose.Schema.Types.Decimal128,
+      required: true,
+    },
+
+    averageCostPerShare: {
+      type: mongoose.Schema.Types.Decimal128,
+      required: true,
+    },
+
+    currentValue: {
+      type: mongoose.Schema.Types.Decimal128,
+    },
+
+    unrealizedGainLoss: {
+      type: mongoose.Schema.Types.Decimal128,
+      required: true,
+    },
+
+    totalReturnsReceived: {
+      type: mongoose.Schema.Types.Decimal128,
+      required: true,
+    },
+
+    currency: {
+      type: String,
+      required: true,
+    },
+
+    // Acquisition History (Embedded Array)
+    acquisitions: [
+      {
+        dealId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "deals",
+          required: true,
+        },
+
+        shares: {
+          type: Number,
+          required: true,
+        },
+
+        pricePerShare: {
+          type: mongoose.Schema.Types.Decimal128,
+          required: true,
+        },
+
+        amount: {
+          type: mongoose.Schema.Types.Decimal128,
+          required: true,
+        },
+
+        acquiredAt: {
+          type: Date,
+          required: true,
+        },
+
+        type: {
+          type: String,
+          enum: ["PRIMARY", "SECONDARY"],
+          required: true,
+        },
+      },
+    ],
+  },
+  { timestamps: false }
 );
 
-notificationSchema.pre("save", function (next) {
-if (this.isModified("isRead") && this.isRead === true && !this.readAt) {
-this.readAt = new Date();}
-if (this.isModified("isRead") && this.isRead === false) {
-this.readAt = null;
-}
-next();
-}
-);
 
-const Notification = mongoose.model("Notification", notificationSchema);
-
-export default Notification;
+const Ownership = mongoose.models.Ownership || mongoose.model("Ownership", ownershipRecordSchema);
+export default Ownership;
