@@ -105,6 +105,12 @@ export const loginUser = async (req,res) =>{
       return res.status(404).json({message : "Email not found "}) ; 
     }
 
+     if(user.status !== "ACTIVE"){
+      return res.status(403).json({
+        message:"Account not active"
+      });
+    }
+
     const isMatch = await bcrypt.compare(password, user.passwordHash);
     if(!isMatch){
       return res.status(404).json({message : "Wrong password"}) ; 
@@ -122,7 +128,11 @@ export const loginUser = async (req,res) =>{
     res.status(200).json({
       message :"Log in successful",
       token :token,
-      id :user._id
+      user:{
+        id:user._id,
+        email:user.email,
+        role:user.userType
+      }
     }); 
     
   }
@@ -130,7 +140,7 @@ export const loginUser = async (req,res) =>{
         res.status(500).json({ message: error.message });
 
   }
-} ;
+} ;//we redirect to the pages hasab al role in the front-end  
 
 //TO CHECK MA KHOLSET AND DIDINT TEST IT 
 

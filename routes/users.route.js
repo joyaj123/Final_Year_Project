@@ -16,6 +16,7 @@ router.get("/:id", getUser);
 router.post("/", postUser);
 router.put("/:id", putUser);
 router.delete("/:id", deleteUser);
-router.post("/login", authMiddleware,loginUser) ; //If someone sends POST /login → run loginUser() 
-
+router.post("/login",loginUser) ; //If someone sends POST /login → run loginUser() 
+//no middleware on login and signup 
 export default router;
+
