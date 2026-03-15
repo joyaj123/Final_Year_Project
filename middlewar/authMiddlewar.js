@@ -1,9 +1,9 @@
 import jwt from "jsonwebtoken";
-
+//run before the route 
 export const authMiddleware = (req,res,next)=>{ //authentication 
     //its job hon is to verify the JWT token is valid  
   try{
-    const authHeader = req.headers.authorization;
+    const authHeader = req.headers.authorization; //get the authorization from the header men al token 
 
     if(!authHeader){
       return res.status(401).json({message:"No token"});
@@ -11,9 +11,9 @@ export const authMiddleware = (req,res,next)=>{ //authentication
 
     const token = authHeader.split(" ")[1];
 
-    const decoded = jwt.verify(token,process.env.JWT_SECRET);
+    const decoded = jwt.verify(token,process.env.JWT_SECRET); //check if token is valid 
 
-    req.user = decoded;
+    req.user = decoded; //add the user info in the request 
 
     next();
 
@@ -23,6 +23,10 @@ export const authMiddleware = (req,res,next)=>{ //authentication
   }
 
 };//requirement here : is user loged in?
+
+
+
+
 
 //WE WILL USE AUTHORIZATION MIDDLEWAR TOO
 //y3ne to check the role eza admin, investor,company , men hata had kel route 
