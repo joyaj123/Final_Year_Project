@@ -1,30 +1,27 @@
 import jwt from "jsonwebtoken";
 //run before the route 
-export const authMiddleware = (req,res,next)=>{ //authentication 
-    //its job hon is to verify the JWT token is valid  
-  try{
-    const authHeader = req.headers.authorization; //get the authorization from the header men al token 
+import jwt from "jsonwebtoken";
 
-    if(!authHeader){
-      return res.status(401).json({message:"No token"});
+export const authMiddleware = (req, res, next) => {
+  try {
+    const token = req.cookies.token;  //to check the cookies where the token is 
+
+    if (!token) {
+      return res.status(401).json({ message: "No token" });
     }
 
-    const token = authHeader.split(" ")[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    const decoded = jwt.verify(token,process.env.JWT_SECRET); //check if token is valid 
-
-    req.user = decoded; //add the user info in the request 
+    req.user = decoded;
 
     next();
 
+  } catch (error) {
+    return res.status(401).json({ message: "Invalid token" });
   }
-  catch(error){
-    return res.status(401).json({message:"Invalid token"});
-  }
+};
 
-};//requirement here : is user loged in?
-
-
+//requirement here : is user loged in?
 
 
 
