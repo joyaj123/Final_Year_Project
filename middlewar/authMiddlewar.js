@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 //run before the route 
-import jwt from "jsonwebtoken";
+//import jwt from "jsonwebtoken";
 
 export const authMiddleware = (req, res, next) => {
   try {
