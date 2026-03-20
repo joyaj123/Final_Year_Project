@@ -8,7 +8,8 @@ import {
   postUser,
   putUser,
   deleteUser,
-  loginUser
+  loginUser,
+  registerUser
 } from "../controllers/users.controller.js";
 
 router.get("/", getAllUsers);
@@ -16,7 +17,8 @@ router.get("/:id", getUser);
 router.post("/", postUser);
 router.put("/:id", putUser);
 router.delete("/:id", deleteUser);
-router.post("/login",loginUser) ; //If someone sends POST /login → run loginUser() 
+router.post("/login",loginUser) ;//If someone sends POST /login → run loginUser() 
+router.post("/register",registerUser)
 //no middleware on login and signup 
 export default router;
 

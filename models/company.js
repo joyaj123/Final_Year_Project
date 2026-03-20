@@ -176,6 +176,12 @@ const CompanySchema = new mongoose.Schema(
       growthRate: { type: Number },
     },
 
+    isListing: {
+      type: Boolean,
+      default: false,
+    },
+
+
     // ✅ Wallet like Investor
     wallet: { type: WalletSchema, required: true, default: () => ({}) },
   },

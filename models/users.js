@@ -1,3 +1,4 @@
+import bcrypt from "bcrypt";
 import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema({
@@ -69,8 +70,7 @@ const userSchema = new mongoose.Schema({
 });
 
 
-
-userSchema.pre("save", async function (next) {
+userSchema.pre("save", async function () {
   // Hash password if it was modified or is new
   if (this.isModified("passwordHash")) {
     const saltRounds = 10;
@@ -82,7 +82,7 @@ userSchema.pre("save", async function (next) {
     throw new Error("Invalid country ObjectId");
   }
 
-  next();
+  // plus besoin de next()
 });
 
 
