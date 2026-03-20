@@ -4,7 +4,7 @@ import mongoose from "mongoose";
 const userSchema = new mongoose.Schema({
   // Core Identification
   email: { type: String, required: true, unique: true },
-  passwordHash: { type: String, required: true },
+  passwordHash: { type: String, required: true }, //done
   userType: { 
     type: String, 
     enum: ["INVESTOR", "BUSINESS_OWNER", "ADMIN", "SUPER_ADMIN"], 
@@ -12,7 +12,7 @@ const userSchema = new mongoose.Schema({
   },
   status: { 
     type: String, 
-    enum: ["PENDING", "ACTIVE", "SUSPENDED", "DEACTIVATED"], 
+    enum: ["PENDING", "ACTIVE", "SUSPENDED", "DEACTIVATED"],  //done
     required: true 
   },
   createdAt: { type: Date, default: Date.now },
@@ -52,12 +52,14 @@ const userSchema = new mongoose.Schema({
 
   // Security (Embedded Document)
   security: {
-    twoFactorEnabled: { type: Boolean, required: true, default: false },
-    twoFactorSecret: { type: String },
-    lastLogin: { type: Date },
-    failedLoginAttempts: { type: Number, required: true, default: 0 },
-    lockedUntil: { type: Date },
-    passwordChangedAt: { type: Date }
+    /*twoFactorEnabled: { type: Boolean, required: true, default: false },
+    twoFactorSecret: { type: String },*/
+    lastLogin: { type: Date }, //done
+    failedLoginAttempts: { type: Number, required: true, default: 0 },//done
+    lockedUntil: { type: Date }, //done 
+    passwordChangedAt: { type: Date }, 
+    resetOTP: {type : String}, //done,added this
+    resetOTPExpiry: {type : Date} //done,added this 
   },
 
   // Preferences (Embedded Document)

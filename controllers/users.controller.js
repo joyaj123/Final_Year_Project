@@ -3,7 +3,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import Investor from "../models/Investor.js";
 import Company from "../models/Company.js";
-
+import nodemailer from 'nodemailer' ; 
 
 const getAllUsers = async (req, res) => {
   try {
@@ -94,53 +94,155 @@ const deleteUser = async (req, res) => {
 };
 
 
-export const loginUser = async (req,res) =>{
-  try{
-    const {email,password} = req.body ; 
-    
-    //find email of the user
-    const user = await User.findOne({email}) ; //bi redele kel al document tb3 hyda al user ma3 this email
+export const loginUser = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email });
+    const allowedStatuses = ["ACTIVE", "PENDING"];//pending y3ne al admin ma 3emel accept
 
-    if(!user){
-      return res.status(404).json({message : "Email not found "}) ; 
+
+    if (!user) {
+      return res.status(404).json({ message: "Email not found" });
     }
 
-     if(user.status !== "ACTIVE"){
-      return res.status(403).json({
-        message:"Account not active"
-      });
+    // Account status
+   if (!allowedStatuses.includes(user.status)) {
+   return res.status(403).json({ message: "Account not allowed to log in" });
+   }
+
+    // Check if account is locked
+    if (user.security.lockedUntil && user.security.lockedUntil > new Date()) {
+      return res.status(403).json({ message: "Account temporarily locked. Try later." });
     }
 
+    // Password check
     const isMatch = await bcrypt.compare(password, user.passwordHash);
-    if(!isMatch){
-      return res.status(404).json({message : "Wrong password"}) ; 
+    if (!isMatch) {
+      // Increment failed login attempts
+      user.security.failedLoginAttempts += 1;
+      if (user.security.failedLoginAttempts >= 5) {
+        user.security.lockedUntil = new Date(Date.now() + 15 * 60 * 1000); // 15 min lock
+      }
+      await user.save();
+      return res.status(401).json({ message: "Wrong password" });
     }
 
+    // Successful login
+    user.security.failedLoginAttempts = 0;
+    user.security.lockedUntil = null;
+    user.security.lastLogin = new Date(); //new date() indicate the current moment 
+    await user.save();
+
+    // JWT token
     const token = jwt.sign(
-      {
-        id:user._id ,
-        role:user.userType
-      }, 
+      { id: user._id, role: user.userType },
       process.env.JWT_SECRET,
-      {expiresIn:"7d"}
-    ) ;
+      { expiresIn: "7d" }
+    );
 
-    res.status(200).json({
-      message :"Log in successful",
-      token :token,
-      user:{
-        id:user._id,
-        email:user.email,
-        role:user.userType
-      }
-    }); 
     
+    res.cookie("token", token, {  
+      httpOnly: true,  
+      secure: false,  
+      sameSite: "strict"  
+   });
+
+
+    res.status(200).json({ //for testing on thunder client 
+      message: "Log in successful",
+      token,
+      user: {
+        id: user._id,
+        email: user.email,
+        role: user.userType
+      }
+    });
+
+
+
+    
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
-  catch (error){
-        res.status(500).json({ message: error.message });
+};//we redirect to the pages hasab al role in the front-end  
+
+
+//FUNCTION TO SEND OTP 
+export const forgotPassword = async (req,res) =>{
+
+  try{
+  const {email} = req.body ;
+  const user = await User.findOne({ email });
+
+
+    if (!user) {
+      return res.json({ message: 'Email not registered.' });
+    }
+
+    
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    user.security.resetOTP = otp ; 
+    user.security.resetOTPExpiry = Date.now() + 10 * 60 *1500 ; //15 min
+    await user.save() ; 
+
+     // Send email
+    const transporter = nodemailer.createTransport({
+      service: 'Gmail',
+      auth: { //email that is gonna send the otp 
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: 'Password Reset OTP',
+      text: `Your OTP is ${otp}. It expires in 15 minutes.`,
+    });
+
+    res.json({ message: ' Verification code sent to your email' });
 
   }
-} ;//we redirect to the pages hasab al role in the front-end  
+  catch(error){
+    res.status(500).json({message : 'server error'}) ; 
+
+  }
+
+}
+
+//FUNCTION TO CHECK AL OTP AND CHANGE THE PASS
+export const resetPassword = async (req, res) => {
+  try {
+    const { email, otp, newPassword } = req.body;
+
+    const user = await User.findOne({ email });
+    if (!user) return res.status(400).json({ message: 'Invalid request' });
+
+    if (
+      user.security.resetOTP !== otp ||
+      user.security.resetOTPExpiry < Date.now()
+    ) {
+      return res.status(400).json({ message: 'Invalid or expired OTP' });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    user.passwordHash = await bcrypt.hash(newPassword, salt);
+
+    // Clear OTP and set date for changed password 
+    user.resetOTP = null;
+    user.resetOTPExpiry = null;
+    user.security.passwordChangedAt = new Date() ; 
+
+    await user.save();
+
+    res.json({ message: 'Password reset successful' });
+
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 
 export const registerUser = async (req, res) => {
   try {
