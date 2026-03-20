@@ -2,9 +2,9 @@ import mongoose from "mongoose";
 
 const InvestmentSweetSpotSchema = new mongoose.Schema( //addeh fi yedfa3 2a2ala chi w aktr chi 
   {
-    min: { type: Number, required: false },
-    max: { type: Number, required: false },
-    currency: { type: String, required: false },
+    min: { type: Number},
+    max: { type: Number},
+    currency: { type: String},
   },
   { _id: false }
 );
@@ -121,6 +121,11 @@ const investorSchema = new mongoose.Schema(
       index: true,
     },
 
+    isOnboarded: {
+      type: Boolean,
+      default: false,
+    },
+
     accreditationStatus: { 
       type: String,
       enum: ["PENDING", "VERIFIED", "REJECTED", "EXPIRED"],
@@ -135,11 +140,16 @@ const investorSchema = new mongoose.Schema(
 
     investmentSweetSpot: { type: InvestmentSweetSpotSchema, required: false },
 
-    kyc: { type: KYCSchema, required: true },
+    kyc: { type: KYCSchema, required: true, default: () => ({}) },
 
     sourceOfFunds: { type: SourceOfFundsSchema, required: false },
 
-    company: { type: CompanySchema, required: false },
+    company: {
+        type: CompanySchema,
+        required: function () {
+        return this.investorType === "COMPANY";
+      },
+    },
 
     wallet: { type: WalletSchema, required: true },
 
@@ -166,6 +176,15 @@ const investorSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+investorSchema.pre("save", function (next) {
+
+  if (this.investorType === "INDIVIDUAL") {
+    this.company = undefined;
+  }
+
+  next();
+});
 
 const Investor = mongoose.model("Investor", investorSchema);
 export default Investor;
