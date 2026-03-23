@@ -90,6 +90,23 @@ const deleteDeal = async (req, res) => {
   }
 };
 
+export const getActiveDeals = async (req,res) =>{
+  try{
+    const deals = await Deal.find({
+      status : "OPEN",
+      adminStatus : "APPROVED",
+      "fundingProgress.remainingAmount": { $gt: 0 }
+
+    }).select('title  description investmentTerms fundingProgress ') ;
+    
+    res.status(200).json({deals});
+  }
+  catch(error){
+    res.status(500).json({message : error.message}) ; 
+  }
+}
+
+
 export {
   postDeal,
   getAllDeal,
