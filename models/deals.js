@@ -9,7 +9,7 @@ const dealSchema = new mongoose.Schema(
       trim: true,
     },
 
-    companyId: {
+    companyId: { //done
       type: mongoose.Schema.Types.ObjectId,
       ref: "companies",
       required: true,
@@ -52,9 +52,9 @@ const dealSchema = new mongoose.Schema(
       index: true,
     },
 
-    publishedAt: {
+    publishedAt: { //done
       type: Date,
-      default: null,
+      default: Date.now,
     },
 
     closedAt: {
@@ -64,7 +64,7 @@ const dealSchema = new mongoose.Schema(
 
     // Investment Terms
     investmentTerms: {
-      targetRaise: {
+      targetRaise: { 
         type: mongoose.Schema.Types.Decimal128,
         required: true,
       },
@@ -154,12 +154,14 @@ const dealSchema = new mongoose.Schema(
       sectorId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "sectors",
+        
       },
 
       subsectorId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "subsectors",
         default: null,
+         
       },
 
       country: {
@@ -209,11 +211,11 @@ const dealSchema = new mongoose.Schema(
     // Admin Review
     adminReview: {
       reviewedBy: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: mongoose.Schema.Types.ObjectId, //users, check in the controller that the user is an amdin
         ref: "admins",
         default: null,
       },
-
+      
       reviewedAt: {
         type: Date,
         default: null,
@@ -234,6 +236,7 @@ const dealSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
 
 dealSchema.pre('save', async function(next) {
   try {
@@ -259,8 +262,6 @@ dealSchema.pre('save', async function(next) {
      console.log(error.message) ; 
   }
 });
-
-
 
 
 const Deal = mongoose.model("Deal", dealSchema);
