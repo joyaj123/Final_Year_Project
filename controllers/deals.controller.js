@@ -89,7 +89,44 @@ const deleteDeal = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+ const updateDealStatus =async(req,res) =>{
+  try{
+    const dealId=req.params.id;
+    const { decision, notes } = req.body;
+    
+    //we need to check if deal exists
+    const deal= await Deal.findById(dealId);
+    if(!deal){
+      return res.status(404).json({message: "Deal not found"});
+    }
+    //check if the status is not draft and the admin status is not pending 
+    if(deal.status!== "DRAFT" && deal.adminStatus!== "PENDING"){
+      return res.status(400).json({message: "Deal has been reviewed"});
+    }
+    const cleanDecision = decision?.toLowerCase().trim();
 
+    if (cleanDecision === "approve") {
+      deal.adminStatus = "APPROVED";
+      deal.status = "OPEN";
+    } else if (cleanDecision === "reject") {
+      deal.adminStatus = "REJECTED";
+      deal.status = "CANCELLED";
+    } else {
+      return res.status(400).json({ message: "Invalid decision" });
+    }
+    deal.adminReview={
+      reviewedBy:req.userId,
+      reviewedAt: new Date(),
+      action: deal.adminStatus,
+      notes: notes || null,
+    };
+    await deal.save()
+    res.json({message: `Deal ${decision}d successfully`, deal});
+
+  }catch(error){
+    res.status(500).json({message: error.message});
+  }
+ }
 export const getActiveDeals = async (req,res) =>{
   try{
     const deals = await Deal.find({
@@ -113,4 +150,5 @@ export {
   getDeal,
   putDeal,
   deleteDeal,
+  updateDealStatus
 };
