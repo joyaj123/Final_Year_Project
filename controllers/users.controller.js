@@ -141,11 +141,13 @@ export const loginUser = async (req, res) => {
     );
 
     
-    res.cookie("token", token, {  
-      httpOnly: true,  
-      secure: false,  
-      sameSite: "strict"  
-   });
+    // In loginUser function, modify the cookie settings
+res.cookie("token", token, {  
+  httpOnly: true,  
+  secure: false,  
+  sameSite: "lax",  // Change from "strict" to "lax"
+  path: "/"
+});
 
 
     res.status(200).json({ //for testing on thunder client 
