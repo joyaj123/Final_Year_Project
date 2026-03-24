@@ -72,22 +72,6 @@ const userSchema = new mongoose.Schema({
 });
 
 
-userSchema.pre("save", async function () {
-  // Hash password if it was modified or is new
-  if (this.isModified("passwordHash")) {
-    const saltRounds = 10;
-    this.passwordHash = await bcrypt.hash(this.passwordHash, saltRounds);
-  }
-
-  // Validate country ObjectId
-  if (!mongoose.Types.ObjectId.isValid(this.address.country)) {
-    throw new Error("Invalid country ObjectId");
-  }
-
-  // plus besoin de next()
-});
-
-
 const User = mongoose.model("User", userSchema);
 
 export default User;  // 👈 This is crucial for ES modules
