@@ -74,110 +74,42 @@ export const deleteInvestor = async (req, res) => {
 
 export const onboarding = async (req, res) => {
   try {
-    const {
-      investorType,
-      riskTolerance,
-      kyc,
-      investmentSweetSpot,
-      sourceOfFunds,
-      company,
-      documents,
-      bankAccounts,
-    } = req.body;
-    
-    if (!investorType) return res.status(400).json({ message: "investorType is required" });
 
-    if (!sourceOfFunds?.primary) {
-      return res.status(400).json({
-        message: "Primany sourceOfFunds is required",
-      });
-    }
-    if(!kyc?.level){
-      return res.status(400).json({
-        message: "kyc level is required",
-      });
-    }
+    const kycLevel =
+      req.body.investorType === "INDIVIDUAL"
+      ? "BASIC"
+      : req.body.investorType === "COMPANY"
+      ? "STANDARD"
+      : undefined; 
 
-    if (investorType === "COMPANY") {
-      if (!company?.name)
-      return res.status(400).json({ message: "Company name is required" });
-
-     if (!company?.registrationNumber)
-      return res.status(400).json({ message: "Registration Number is required" });
-    
-     if (!company?.incorporationDate)
-      return res.status(400).json({ message: "Incorporation Date is required" });
-    }
-
-    if (!Array.isArray(documents) || documents.length === 0) {
-      return res.status(400).json({
-        message: "At least one KYC document is required",
-      });
-    }
-
-    for (const doc of documents) {
-      if (
-        !doc.type ||
-        !doc.fileUrl ||
-        !doc.uploadedAt ||
-        !doc.verificationStatus
-      ) {
-        return res.status(400).json({
-          message:
-            "Each document must include type, fileUrl, uploadedAt, and verificationStatus",
-        });
-      }
-    }
-    if (!Array.isArray(bankAccounts) || bankAccounts.length === 0) {
-        return res.status(400).json({
-      message: "At least one bank account is required",
-      });
-    } 
-
-    for (const account of bankAccounts) {
-      if (!account.bankName) {
-        return res.status(400).json({ message: "BankName is required" });
-      }
-
-       if (!account.accountNumber) {
-         return res.status(400).json({ message: "AccountNumber is required" });
-      }
-
-      if (typeof account.isPrimary !== "boolean") {
-         return res.status(400).json({ message: "isPrimary must be true or false" });
-       }
-} 
     const investor = await Investor.create({
-        userId: req.userId,
-        investorType,
-        accreditationStatus : "PENDING",
-        riskTolerance,
-        investmentSweetSpot,
-        sourceOfFunds,
-        company: investorType === "COMPANY" ? company : undefined,
-        kyc: {
-          level: kyc.level,
-          status: "IN_PROGRESS",
-          documents,
-        },
-        wallet: {
-            balance: 0,
-            currency: "USD",
-            lockedBalance: 0,
-            totalInvested: 0,
-            totalReturns: 0
-        },
-        bankAccounts,
-        isOnboarded: true,
-      },
-    );
+      ...req.body,
+      userId: req.userId,
+      company: req.body.investorType === "COMPANY" ? req.body.company : undefined,
+       kyc: {
+          ...req.body.kyc,
+          level: kycLevel,
+       },
+      isOnboarded: true,
+    });
 
-    res.status(201).json({
+    return res.status(201).json({
       message: "Onboarding completed",
       investor,
     });
-
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    if (err.name === "ValidationError") {
+      const errors = Object.values(err.errors).map((e) => e.message);
+
+      return res.status(400).json({
+        message: "Validation failed",
+        errors,
+      });
+    }
+
+    return res.status(500).json({
+      message: "Server error",
+      error: err.message,
+    });
   }
 };

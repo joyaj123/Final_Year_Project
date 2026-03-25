@@ -60,7 +60,6 @@ app.use(cookieParser()); //IMPORTANT TO PARSE COOKIES
 //routes
 app.use("/users", usersRoute);
 app.use("/deals", dealsRoute);
-//app.use("/api/users", usersRoute); 
 app.use("/distributions", distributionsRoute);
 app.use("/countries", countriesRoute);
 app.use("/investors", investorsRoute);
