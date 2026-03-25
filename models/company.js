@@ -29,6 +29,11 @@ const CompanySchema = new mongoose.Schema(
       index: true,
     },
 
+    slug: {
+      type: String,
+      required: true,
+    },
+
     registrationNumber: {
       type: String,
       trim: true,

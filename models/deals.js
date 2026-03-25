@@ -235,64 +235,28 @@ const dealSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Pre-save middleware
 dealSchema.pre('save', async function(next) {
   try {
-    // Check investor
-    const investor = await mongoose.model('investors').findById(this.investorId);
-    if (!investor) throw new Error(`Investor ${this.investorId} not found`);
-    
-    // Check company
+
+    //Check company exists
     const company = await mongoose.model('companies').findById(this.companyId);
     if (!company) throw new Error(`Company ${this.companyId} not found`);
-    
-    // Check sector
+
+    // Check sector exists
     if (this.companySnapshot?.sectorId) {
       const sector = await mongoose.model('sectors').findById(this.companySnapshot.sectorId);
       if (!sector) throw new Error(`Sector ${this.companySnapshot.sectorId} not found`);
     }
-    
-    next();
-  } catch (error) {
-    next(error);
-  }
-});
 
-// Pre-findOneAndUpdate middleware - FIXED VERSION
-dealSchema.pre('findOneAndUpdate', async function(next) {
-  try {
-    const update = this.getUpdate();
-    
-    // Check if we're updating investorId
-    if (update.investorId) {
-      const investor = await mongoose.model('investors').findById(update.investorId);
-      if (!investor) throw new Error(`Investor ${update.investorId} not found`);
+    // Check subsector exists (optional)
+    if (this.companySnapshot?.subsectorId) {
+      const subsector = await mongoose.model('subsectors').findById(this.companySnapshot.subsectorId);
+      if (!subsector) throw new Error(`Subsector ${this.companySnapshot.subsectorId} not found`);
     }
+
     
-    // Check if we're updating companyId
-    if (update.companyId) {
-      const company = await mongoose.model('companies').findById(update.companyId);
-      if (!company) throw new Error(`Company ${update.companyId} not found`);
-    }
-    
-    // Check if we're updating sectorId in companySnapshot
-    if (update['companySnapshot.sectorId']) {
-      const sector = await mongoose.model('sectors').findById(update['companySnapshot.sectorId']);
-      if (!sector) throw new Error(`Sector ${update['companySnapshot.sectorId']} not found`);
-    }
-    
-    // Handle case where companySnapshot is being updated as an object
-    if (update.companySnapshot && update.companySnapshot.sectorId) {
-      const sector = await mongoose.model('sectors').findById(update.companySnapshot.sectorId);
-      if (!sector) throw new Error(`Sector ${update.companySnapshot.sectorId} not found`);
-    }
-    
-    // Update the updatedAt field
-    update.updatedAt = new Date();
-    
-    next();
   } catch (error) {
-    next(error);
+     console.log(error.message) ; 
   }
 });
 

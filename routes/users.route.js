@@ -9,7 +9,7 @@ import {
   putUser,
   deleteUser,
   loginUser,
-  registerUser
+  registerUser,
   resetPassword,
   forgotPassword
 

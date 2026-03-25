@@ -81,7 +81,6 @@ export const listing = async (req, res) => {
     } = req.body;
 
     if (!name) return res.status(400).json({ message: "Name is required" });
-    if (!slug) return res.status(400).json({ message: "Slug is required" });
     if (!listingType) return res.status(400).json({ message: "Listing type is required" });
 
     if (!details?.description) return res.status(400).json({ message: "Description is required" });
@@ -91,21 +90,22 @@ export const listing = async (req, res) => {
     if (!details?.website) return res.status(400).json({ message: "Website is required" });
 
     if (!classification?.sectorId) return res.status(400).json({ message: "SectorId is required" });
-    const sector = await Sector.findById(classification.sectorId);
-    if (!sector) {
-      return res.status(404).json({ message: "Sector not found" });}
     if (!classification?.businessType) return res.status(400).json({ message: "Business type is required" });
 
     if (!funding?.targetAmount) return res.status(400).json({ message: "Target amount is required" });
     if (!funding?.minimumInvestment) return res.status(400).json({ message: "Minimum investment is required" });
     if (!funding?.currency) return res.status(400).json({ message: "Currency is required" });
     if (!funding?.equityOffered) return res.status(400).json({ message: "Equity offered is required" });
+    if (!funding?.totalShares) return res.status(400).json({ message: "Total shares is required" });
+    if (!funding?.sharePrice) return res.status(400).json({ message: "Share price is required" });
     if (!funding?.pricePerPercent) return res.status(400).json({ message: "Price per percent is required" });
     if (!funding?.fundingDeadline) return res.status(400).json({ message: "Funding deadline is required" });
     if (!funding?.fundingStartDate) return res.status(400).json({ message: "Funding start date is required" });
+
     if (!financials?.arr) return res.status(400).json({ message: "ARR is required" });
     if (!financials?.grossRevenue) return res.status(400).json({ message: "Gross revenue is required" });
     if (!financials?.netIncome) return res.status(400).json({ message: "Net income is required" });
+    if (!financials?.expenses) return res.status(400).json({ message: "Expensesis required" });
     if (!financials?.asOfDate) return res.status(400).json({ message: "As of date is required" });
     if (!financials?.currency) return res.status(400).json({ message: "Financial currency is required" });
     if (financials?.audited === undefined) return res.status(400).json({ message: "Audited flag is required" });
@@ -150,18 +150,12 @@ export const listing = async (req, res) => {
     if (!metrics?.employeeCount)
       return res.status(400).json({ message: "Employee count is required" });
 
-    const existingCompany = await Investor.findOne({ ownerId: req.userId });
-    if (existingCompany && existingCompany.isListing) {
-      return res.status(400).json({
-        message: "Listing already completed",
-      });
-    }
-
-    const company = await Company.findOneAndUpdate({
+    const company = await Company.create({
         ownerId: req.userId,
         name,
         slug,
         registrationNumber,
+        status: "PENDING_REVIEW",
         listingType,
         details,
         classification,
