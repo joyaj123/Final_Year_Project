@@ -77,18 +77,24 @@ export const onboarding = async (req, res) => {
     const {
       investorType,
       riskTolerance,
+      kyc,
       investmentSweetSpot,
       sourceOfFunds,
       company,
       documents,
       bankAccounts,
     } = req.body;
-
+    
     if (!investorType) return res.status(400).json({ message: "investorType is required" });
 
-    if (!sourceOfFunds.primary) {
+    if (!sourceOfFunds?.primary) {
       return res.status(400).json({
         message: "Primany sourceOfFunds is required",
+      });
+    }
+    if(!kyc?.level){
+      return res.status(400).json({
+        message: "kyc level is required",
       });
     }
 
@@ -122,17 +128,25 @@ export const onboarding = async (req, res) => {
         });
       }
     }
-     if (!bankAccounts?.bankName) return res.status(400).json({ message: "BankName is required" });
-     if (!bankAccounts?.accountNumber) return res.status(400).json({ message: "AccountNumber is required" });
-     if (!bankAccounts?.isPrimary) return res.status(400).json({ message: "Primary account is required" });
-
-    const existingInvestor = await Investor.findOne({ userId: req.userId });
-    if (existingInvestor && existingInvestor.isOnboarded) {
-      return res.status(400).json({
-        message: "Onboarding already completed",
+    if (!Array.isArray(bankAccounts) || bankAccounts.length === 0) {
+        return res.status(400).json({
+      message: "At least one bank account is required",
       });
-    }
+    } 
 
+    for (const account of bankAccounts) {
+      if (!account.bankName) {
+        return res.status(400).json({ message: "BankName is required" });
+      }
+
+       if (!account.accountNumber) {
+         return res.status(400).json({ message: "AccountNumber is required" });
+      }
+
+      if (typeof account.isPrimary !== "boolean") {
+         return res.status(400).json({ message: "isPrimary must be true or false" });
+       }
+} 
     const investor = await Investor.create({
         userId: req.userId,
         investorType,
@@ -142,6 +156,7 @@ export const onboarding = async (req, res) => {
         sourceOfFunds,
         company: investorType === "COMPANY" ? company : undefined,
         kyc: {
+          level: kyc.level,
           status: "IN_PROGRESS",
           documents,
         },

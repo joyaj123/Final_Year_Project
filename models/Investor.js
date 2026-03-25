@@ -177,13 +177,10 @@ const investorSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-investorSchema.pre("save", function (next) {
-
+investorSchema.pre("save", function () {
   if (this.investorType === "INDIVIDUAL") {
     this.company = undefined;
   }
-
-  next();
 });
 
 const Investor = mongoose.model("Investor", investorSchema);

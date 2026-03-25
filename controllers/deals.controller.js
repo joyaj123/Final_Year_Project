@@ -1,4 +1,6 @@
 import Deal from "../models/deals.js";
+import Company from "../models/Company.js";
+import mongoose from "mongoose";
 
 // CREATE a deal
 const postDeal = async (req, res) => {
@@ -143,6 +145,116 @@ export const getActiveDeals = async (req,res) =>{
   }
 }
 
+
+const generateDealNumber = () => {
+  const random = Math.floor(1000 + Math.random() * 9000);
+  return `DEAL-${Date.now()}-${random}`;
+};
+
+export const createDeal = async (req, res) => {
+  try {
+    const {
+      title,
+      description,
+      investmentTerms,
+      fundingProgress,
+      companySnapshot,
+      timeline
+    } = req.body;
+
+    const company = await Company.findOne({ ownerId: req.userId });
+    if (!company) {
+      return res.status(404).json({ message: "Company not found for this user" });
+    }
+    if (!title) {
+      return res.status(400).json({ message: "Title is required" });
+    }
+    if (!description) {
+      return res.status(400).json({ message: "Description is required" });
+    }
+    if (!investmentTerms?.targetRaise) {
+      return res.status(400).json({ message: "Target raise is required" });
+    }
+    if (!investmentTerms?.currency) {
+      return res.status(400).json({ message: "Currency is required" });
+    }
+    if (!investmentTerms?.minInvestment) {
+      return res.status(400).json({ message: "Minimum investment is required" });
+    }
+    if (investmentTerms?.equityOfferedPct === undefined) {
+      return res.status(400).json({ message: "Equity offered percentage is required" });
+    }
+    if (!investmentTerms?.pricePerPercent) {
+      return res.status(400).json({ message: "Price per percent is required" });
+    }
+    if (!investmentTerms?.valuation) {
+      return res.status(400).json({ message: "Valuation is required" });
+    }
+    if (fundingProgress?.amountRaised === undefined || fundingProgress?.amountRaised === null) {
+      return res.status(400).json({ message: "Amount raised is required" });
+    }
+    if (fundingProgress?.percentageRaised === undefined || fundingProgress?.percentageRaised === null) {
+        return res.status(400).json({ message: "Percentage raised is required" });
+    }
+    if (fundingProgress?.investorCount === undefined || fundingProgress?.investorCount === null) {
+      return res.status(400).json({ message: "Investor count is required" });
+    }
+    if (fundingProgress?.remainingAmount === undefined || fundingProgress?.remainingAmount === null) {
+     return res.status(400).json({ message: "Remaining amount is required" });
+    }
+
+    const deal = await Deal.create({
+      dealNumber: generateDealNumber(),
+      companyId: company._id,
+      title,
+      description,
+      status:"PENDING_REVIEW",
+      adminStatus:"PENDING",
+      investmentTerms: {
+        targetRaise: investmentTerms.targetRaise,
+        currency: investmentTerms.currency,
+        minInvestment: investmentTerms.minInvestment,
+        maxInvestment: investmentTerms?.maxInvestment ?? null,
+        equityOfferedPct: investmentTerms.equityOfferedPct,
+        pricePerPercent: investmentTerms.pricePerPercent,
+        pricePerShare: investmentTerms?.pricePerShare ?? null,
+        totalSharesOffered: investmentTerms?.totalSharesOffered ?? null,
+        valuation: investmentTerms.valuation,
+        valuationMethod: investmentTerms?.valuationMethod ?? null,
+      },
+      fundingProgress: {
+        amountRaised: fundingProgress?.amountRaised,
+        percentageRaised: fundingProgress?.percentageRaised,
+        investorCount: fundingProgress?.investorCount,
+        remainingAmount: fundingProgress.remainingAmount,
+      },
+      companySnapshot: {
+        name: companySnapshot?.name ?? null,
+        sectorId: companySnapshot?.sectorId ?? null,
+        subsectorId: companySnapshot?.subsectorId ?? null,
+        country: companySnapshot?.country ?? null,
+        valuation: companySnapshot?.valuation ?? null,
+        arr: companySnapshot?.arr ?? null,
+        ebitda: companySnapshot?.ebitda ?? null,
+        revenue: companySnapshot?.revenue ?? null,
+      },
+      timeline: {
+        openDate: timeline?.openDate ?? null,
+        closeDate: timeline?.closeDate ?? null,
+        fundingDeadline: timeline?.fundingDeadline ?? null,
+      }
+    });
+
+    return res.status(201).json({
+      message: "Deal created successfully",
+      deal,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      error: err.message,
+    });
+  }
+};
 
 export {
   postDeal,
