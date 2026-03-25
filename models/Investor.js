@@ -34,11 +34,13 @@ const KYCSchema = new mongoose.Schema(
       type: String,
       required: true,
       enum: ["NOT_STARTED", "IN_PROGRESS", "APPROVED", "REJECTED"],
+      default: "IN_PROGRESS"
     },
     level: {
       type: String,
       required: true,
       enum: ["BASIC", "STANDARD", "ENHANCED"],
+      default: "BASIC",
     },
     verifiedAt: { type: Date, required: false },
     expiresAt: { type: Date, required: false },
@@ -151,7 +153,7 @@ const investorSchema = new mongoose.Schema(
       },
     },
 
-    wallet: { type: WalletSchema, required: true },
+    wallet: { type: WalletSchema, required: true, default: () => ({}) },
 
     bankAccounts: { type: [BankAccountSchema], required: false, default: [] },
 
