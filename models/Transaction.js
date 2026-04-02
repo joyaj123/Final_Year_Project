@@ -118,21 +118,15 @@ const transactionSchema = new mongoose.Schema(
   }
 );
 
-transactionSchema.pre("save", function (next) {
+transactionSchema.pre("save", function () {
   if (this.isModified("status") && this.status === "COMPLETED" && !this.completedAt) {
     this.completedAt = new Date();
   }
-  next();
-});
-//Ce hook met automatiquement la date completedAt quand le statut d’une transaction devient "COMPLETED" au moment de la sauvegarde
 
-transactionSchema.pre("save", function(next) {
   if (!this.isNew && this.status === "COMPLETED" && this.isModified("amount")) {
-    return next(new Error("Cannot modify amount after completion"));
+    throw new Error("Cannot modify amount after completion");
   }
-  next();
 });
-//Hook pour empêcher modification après COMPLETED
 
 transactionSchema.post("save", function(doc) {
   if (doc.status === "COMPLETED") {

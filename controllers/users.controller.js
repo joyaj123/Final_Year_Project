@@ -142,12 +142,12 @@ export const loginUser = async (req, res) => {
 
     
     // In loginUser function, modify the cookie settings
-res.cookie("token", token, {  
-  httpOnly: true,  
-  secure: false,  
-  sameSite: "lax",  // Change from "strict" to "lax"
-  path: "/"
-});
+  res.cookie("token", token, {  
+    httpOnly: true,  
+    secure: false,  
+    sameSite: "lax",  // Change from "strict" to "lax"
+    path: "/"
+  });
 
 
     res.status(200).json({ //for testing on thunder client 
@@ -326,108 +326,6 @@ export const registerUser = async (req, res) => {
   }
 };
 
-
-export const register = async (req, res) => {
-  try {
-    const {
-      name,
-      email,
-      password,
-      role,
-
-      // investor fields
-      phone,
-      budget,
-
-      // company fields
-      companyName,
-      sector,
-      website,
-      country
-    } = req.body;
-
-    // 1) vérifier si user existe déjà
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ message: "User already exists" });
-    }
-
-    // 2) vérifier le role
-    if (role !== "investor" && role !== "company") {
-      return res.status(400).json({ message: "Role must be investor or company" });
-    }
-
-    // 3) hasher password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // 4) créer user
-    const user = await User.create({
-      name,
-      email,
-      password: hashedPassword,
-      role
-    });
-
-    let createdProfile = null;
-
-    // 5) si investor => créer Investor
-    if (role === "investor") {
-      createdProfile = await Investor.create({
-        user: user._id,
-        phone,
-        country,
-        budget
-      });
-
-      user.investorProfile = createdProfile._id;
-      await user.save();
-    }
-
-    // 6) si company => créer Company
-    if (role === "company") {
-      if (!companyName) {
-        return res.status(400).json({ message: "companyName is required for company role" });
-      }
-
-      createdProfile = await Company.create({
-        user: user._id,
-        companyName,
-        sector,
-        website,
-        country
-      });
-
-      user.companyProfile = createdProfile._id;
-      await user.save();
-    }
-
-    // 7) créer token
-    const token = jwt.sign(
-      { id: user._id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
-
-    // 8) envoyer token dans cookie
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: false,
-      sameSite: "lax"
-    });
-
-    // 9) réponse
-    return res.status(201).json({
-      message: "Register successful",
-      user,
-      profile: createdProfile
-    });
-
-  } catch (error) {
-    return res.status(500).json({
-      message: error.message
-    });
-  }
-};
 
 export {
   getAllUsers,
