@@ -1,4 +1,5 @@
-
+import { authMiddleware } from "../middlewar/authMiddlewar.js";
+import { roleMiddleware } from "../middlewar/roleMiddleware.js";
 import express from "express";
 const router = express.Router();
 
@@ -7,10 +8,20 @@ import {
   getAllDeal,
   getDeal,
   putDeal,
-  deleteDeal
+  deleteDeal,
+  getActiveDeals,
+  createDeal,
+  updateDealStatus,
+  investInDeal
 } from "../controllers/deals.controller.js";
 
-// Routes
+//specific route deyman fo2 al crud 
+router.get("/activedeals", authMiddleware,roleMiddleware("INVESTOR"), getActiveDeals); //for investor 
+router.post("/createDeal", authMiddleware, roleMiddleware("BUSINESS_OWNER"), createDeal);
+router.put("/:id/decision",authMiddleware,roleMiddleware("ADMIN"),updateDealStatus);
+router.post("/invest", authMiddleware,roleMiddleware("INVESTOR"),investInDeal);
+
+// Routes (usually for admins)
 router.post("/", postDeal);
 router.get("/", getAllDeal);
 router.get("/:id", getDeal);

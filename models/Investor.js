@@ -34,11 +34,13 @@ const KYCSchema = new mongoose.Schema(
       type: String,
       required: true,
       enum: ["NOT_STARTED", "IN_PROGRESS", "APPROVED", "REJECTED"],
+      default: "IN_PROGRESS"
     },
     level: {
       type: String,
       required: true,
       enum: ["BASIC", "STANDARD", "ENHANCED"],
+      default: "BASIC",
     },
     verifiedAt: { type: Date, required: false },
     expiresAt: { type: Date, required: false },
@@ -130,6 +132,7 @@ const investorSchema = new mongoose.Schema(
       type: String,
       enum: ["PENDING", "VERIFIED", "REJECTED", "EXPIRED"],
       index: true,
+      default: "PENDING"
     },
 
     riskTolerance: {
@@ -151,7 +154,7 @@ const investorSchema = new mongoose.Schema(
       },
     },
 
-    wallet: { type: WalletSchema, required: true },
+    wallet: { type: WalletSchema, required: true, default: () => ({}) },
 
     bankAccounts: { type: [BankAccountSchema], required: false, default: [] },
 
@@ -177,13 +180,26 @@ const investorSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-investorSchema.pre("save", function (next) {
+investorSchema.pre('save',async function(){
+  try{
 
+    if(this.preferredSectors){
+      const preferredSectors = await mongoose.model('sectors').findById(this.preferredSectors);
+      if (!preferredSectors) throw new Error(`Sector ${this.preferredSectors} not found`);
+    }
+    if (this.excludedSectors) {
+      const excludedSectors = await mongoose.model('sectors').findById(this.excludedSectors);
+      if (!excludedSectors) throw new Error(`Sector ${this.excludedSectors} not found`);
+    }
+    } catch (error) {
+       console.log(error.message) ; 
+    }
+});
+
+investorSchema.pre("save", function () {
   if (this.investorType === "INDIVIDUAL") {
     this.company = undefined;
   }
-
-  next();
 });
 
 const Investor = mongoose.model("Investor", investorSchema);

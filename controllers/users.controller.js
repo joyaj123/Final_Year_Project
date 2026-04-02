@@ -1,4 +1,4 @@
-import User from "../models/users.js"
+import User from "../models/Users.js"
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import Investor from "../models/Investor.js";
@@ -141,11 +141,13 @@ export const loginUser = async (req, res) => {
     );
 
     
-    res.cookie("token", token, {  
-      httpOnly: true,  
-      secure: false,  
-      sameSite: "strict"  
-   });
+    // In loginUser function, modify the cookie settings
+  res.cookie("token", token, {  
+    httpOnly: true,  
+    secure: false,  
+    sameSite: "lax",  // Change from "strict" to "lax"
+    path: "/"
+  });
 
 
     res.status(200).json({ //for testing on thunder client 
@@ -291,6 +293,12 @@ export const registerUser = async (req, res) => {
       { expiresIn: "7d" }
     );
 
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: false,
+      sameSite: "lax"
+    });
+
     let nextStep = "";
     if (newUser.userType === "INVESTOR") nextStep = "/onboarding";
     else if (newUser.userType === "BUSINESS_OWNER") nextStep = "/listing";
@@ -317,6 +325,8 @@ export const registerUser = async (req, res) => {
     });
   }
 };
+
+
 export {
   getAllUsers,
   getUser,

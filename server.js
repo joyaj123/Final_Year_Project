@@ -54,6 +54,9 @@ app.use(cookieParser()); //IMPORTANT TO PARSE COOKIES
 
 
 
+
+
+
 //routes
 app.use("/users", usersRoute);
 app.use("/deals", dealsRoute);
@@ -68,7 +71,7 @@ app.use("/company", companyRoute);
 app.use("/ownership", ownershipRoute);
 app.use("/audit-logs", auditLogsRoute);
 app.use("/notifications", notificationRoute); 
-app.use("/api/users", usersRoute); 
+//app.use("/api/users", usersRoute); 
 
 // MongoDB Connection
 mongoose.connect(process.env.MONGO_URI)

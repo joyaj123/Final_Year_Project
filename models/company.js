@@ -29,6 +29,11 @@ const CompanySchema = new mongoose.Schema(
       index: true,
     },
 
+    slug: {
+      type: String,
+      required: true,
+    },
+
     registrationNumber: {
       type: String,
       trim: true,
@@ -107,9 +112,9 @@ const CompanySchema = new mongoose.Schema(
       maximumInvestment: { type: mongoose.Schema.Types.Decimal128 },
       currency: { type: String, required: true },
       equityOffered: { type: Number, required: true },
-      pricePerPercent: { type: mongoose.Schema.Types.Decimal128, required: true },
+      pricePerPercent: { type: mongoose.Schema.Types.Decimal128 },
       totalShares: { type: Number, required: true },
-      sharePrice: { type: mongoose.Schema.Types.Decimal128, required: true },
+      sharePrice: { type: mongoose.Schema.Types.Decimal128 },
       amountRaised: { type: mongoose.Schema.Types.Decimal128, default: 0 },
       investorCount: { type: Number, default: 0 },
       fundingStartDate: { type: Date, required: true },
@@ -187,6 +192,22 @@ const CompanySchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+CompanySchema.pre('save',async function(){
+  try{
+
+    if(this.classification?.sectorId){
+      const sector = await mongoose.model('sectors').findById(this.classification.sectorId);
+      if (!sector) throw new Error(`Sector ${this.classification.sectorId} not found`);
+    }
+    if (this.classification?.subsectorId) {
+      const subsector = await mongoose.model('subsectors').findById(this.classification.subsectorId);
+      if (!subsector) throw new Error(`Subsector ${this.classification.subsectorId} not found`);
+    }
+    } catch (error) {
+       console.log(error.message) ; 
+    }
+});
 
 const Company = mongoose.models.Company || mongoose.model("Company", CompanySchema);
 export default Company;
