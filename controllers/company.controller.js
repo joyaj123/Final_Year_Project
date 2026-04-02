@@ -65,10 +65,18 @@ export const updateCompany=async (req, res) => {
 
 export const listing = async (req, res) => {
   try {
+    const { funding, ...rest } = req.body;
+
     const company = await Company.create({
-      ...req.body,
+      ...rest,
       ownerId: req.userId,
-      isListing : true,
+      status: "PENDING_REVIEW",
+      funding: {
+        ...funding,
+        pricePerPercent: funding?.targetAmount / funding?.equityOffered,
+        sharePrice: funding?.targetAmount / funding?.totalShares,
+      },
+      isListing: true,
     });
 
     return res.status(201).json({

@@ -49,7 +49,7 @@ const ownershipRecordSchema = new mongoose.Schema(
 
     averageCostPerShare: {
       type: mongoose.Schema.Types.Decimal128,
-      required: true,
+
     },
 
     currentValue: {
@@ -59,11 +59,13 @@ const ownershipRecordSchema = new mongoose.Schema(
     unrealizedGainLoss: {
       type: mongoose.Schema.Types.Decimal128,
       required: true,
+      default: 0,
     },
 
     totalReturnsReceived: {
       type: mongoose.Schema.Types.Decimal128,
       required: true,
+      default: 0,
     },
 
     currency: {
@@ -87,7 +89,6 @@ const ownershipRecordSchema = new mongoose.Schema(
 
         pricePerShare: {
           type: mongoose.Schema.Types.Decimal128,
-          required: true,
         },
 
         amount: {

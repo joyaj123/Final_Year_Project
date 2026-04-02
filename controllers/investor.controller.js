@@ -74,7 +74,6 @@ export const deleteInvestor = async (req, res) => {
 
 export const onboarding = async (req, res) => {
   try {
-
     const kycLevel =
       req.body.investorType === "INDIVIDUAL"
       ? "BASIC"

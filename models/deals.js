@@ -238,11 +238,11 @@ const dealSchema = new mongoose.Schema(
 );
 
 
-dealSchema.pre('save', async function(next) {
+dealSchema.pre('save', async function() {
   try {
 
     //Check company exists
-    const company = await mongoose.model('companies').findById(this.companyId);
+    const company = await mongoose.model('Company').findById(this.companyId);
     if (!company) throw new Error(`Company ${this.companyId} not found`);
 
     // Check sector exists
