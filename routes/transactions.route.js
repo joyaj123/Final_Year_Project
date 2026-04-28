@@ -1,5 +1,3 @@
-import { authMiddleware } from "../middlewar/authMiddlewar.js";
-import { roleMiddleware } from "../middlewar/roleMiddleware.js";
 import express from "express";
 const router = express.Router();
 import {

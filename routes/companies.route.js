@@ -8,24 +8,15 @@ import {
     postCompany,
     updateCompany,
     deleteCompany,
-    listing,
-   reviewCompany} from "../controllers/company.controller.js";
-    
-router.post("/listing", authMiddleware, roleMiddleware("BUSINESS_OWNER"), listing);
-router.put("/:id/decision",authMiddleware,roleMiddleware("ADMIN"),reviewCompany);
+   reviewCompany,
     getMyCompany,
     listing,
-getMyWallet} from "../controllers/company.controller.js";
+    getMyWallet} from "../controllers/company.controller.js";
     
 router.post("/listing", authMiddleware, roleMiddleware("BUSINESS_OWNER"), listing);
-router.get(
-  "/mywallet",
-  authMiddleware,
-  roleMiddleware("BUSINESS_OWNER", "INVESTOR"),
-  getMyWallet
-); ////////// ROUTE
+router.get("/mywallet",authMiddleware,roleMiddleware("BUSINESS_OWNER", "INVESTOR"),getMyWallet); ////////// ROUTE
 
-
+router.put("/:id/decision",authMiddleware,roleMiddleware("ADMIN"),reviewCompany);
 
 router.get('/',getCompanies);
 router.get("/:id",getCompany);
