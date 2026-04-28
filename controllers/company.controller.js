@@ -147,9 +147,16 @@ export const reviewCompany=async(req,res)=>{
     }
     const before = company.toObject() ;
     //check status
-    if(company.status!=="PENDING_REVIEW"){
-      return res.status(400).json({message: "Company has been reviewed"});
-    }
+    const allowedStatuses = [
+  "PENDING_REVIEW",
+  "DRAFT",
+  "FUNDED",
+  "CLOSED"
+];
+
+if (!allowedStatuses.includes(company.status)) {
+  return res.status(400).json({ message: "Company has been reviewed" });
+}
     const cleanDecision = decision?.toLowerCase().trim();
     if(cleanDecision==="approve"){
       company.status="APPROVED";
@@ -189,7 +196,7 @@ await AuditLogs.create({
     userAgent: req.headers["user-agent"] || "unknown"
   }
 }); 
-  await AuditLogs.save();
+  
 
      res.json({message: `Company ${decision}d successfully`, company});
   }catch(error){

@@ -144,8 +144,7 @@ const deleteDeal = async (req, res) => {
         });}catch(err){
            console.error("AUDIT ERROR",err);
         }
-       await AuditLogs.save();
-    res.json({message: `Deal ${decision}d successfully`, deal});
+       res.json({message: `Deal ${decision}d successfully`, deal});
 
   }catch(error){
     res.status(500).json({message: error.message});
