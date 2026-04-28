@@ -5,13 +5,13 @@ const ownershipRecordSchema = new mongoose.Schema(
   {
     investorId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "investors",
+      ref: "Investor",
       required: true,
     },
 
     companyId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "companies",
+      ref: "Company",
       required: true,
     },
 
@@ -78,7 +78,7 @@ const ownershipRecordSchema = new mongoose.Schema(
       {
         dealId: {
           type: mongoose.Schema.Types.ObjectId,
-          ref: "deals",
+          ref: "Deal",
           required: true,
         },
 

@@ -8,9 +8,11 @@ import {
     postCompany,
     updateCompany,
     deleteCompany,
-    listing} from "../controllers/company.controller.js";
+    listing,
+   reviewCompany} from "../controllers/company.controller.js";
     
 router.post("/listing", authMiddleware, roleMiddleware("BUSINESS_OWNER"), listing);
+router.put("/:id/decision",authMiddleware,roleMiddleware("ADMIN"),reviewCompany);
 
 router.get('/',getCompanies);
 router.get("/:id",getCompany);

@@ -11,7 +11,7 @@ const distributionSchema = new mongoose.Schema(
 
     companyId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "companies",
+      ref: "Company",
       required: true,
       index: true,
     },
@@ -74,7 +74,7 @@ const distributionSchema = new mongoose.Schema(
       {
         investorId: {
           type: mongoose.Schema.Types.ObjectId,
-          ref: "investors",
+          ref: "Investor",
           required: true,
         },
 
@@ -96,7 +96,7 @@ const distributionSchema = new mongoose.Schema(
 
         transactionId: {
           type: mongoose.Schema.Types.ObjectId,
-          ref: "transactions",
+          ref: "Transaction",
         },
 
         paidAt: Date,
@@ -110,14 +110,14 @@ const distributionSchema = new mongoose.Schema(
 distributionSchema.pre('save', async function(next) {
   try {
     // Check company exists
-    const company = await mongoose.model('companies').findById(this.companyId);
+    const company = await mongoose.model('Company').findById(this.companyId);
     if (!company) throw new Error(`Company ${this.companyId} not found`);
     
     // Check all investors in payouts exist
     if (this.payouts && this.payouts.length > 0) {//LOOP LA2ENNO payouts is an array , bas wahad ykoun mch mawjoud bi wa2ef 
       for (let i = 0; i < this.payouts.length; i++) {
         const payout = this.payouts[i];
-        const investor = await mongoose.model('investors').findById(payout.investorId);
+        const investor = await mongoose.model('Investor').findById(payout.investorId);
         if (!investor) throw new Error(`Investor ${payout.investorId} in payout #${i+1} not found`);
       }
     }
