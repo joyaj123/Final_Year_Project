@@ -1,4 +1,8 @@
 import Company from "../models/Company.js";
+import Investor from "../models/Investor.js"; // change name if your file is different
+import mongoose from "mongoose";
+import Transaction from "../models/Transaction.js";
+
 
 //GET COMPANIES
 export const getCompanies=async(req,res)=>{
@@ -99,3 +103,60 @@ export const listing = async (req, res) => {
     });
   }
 };
+
+
+export const getMyCompany = async (req, res) => {
+  try {
+    const company = await Company.findOne({ ownerId: req.userId });
+
+    if (!company) {
+      return res.status(404).json({
+        message: "Company not found for this user",
+      });
+    }
+
+    return res.status(200).json({
+      company,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Server error",
+      error: error.message,
+    });
+  }
+};
+
+
+
+export const getMyWallet = async (req, res) => {
+  try {
+    const userId = req.userId;
+
+    const company = await Company.findOne({ ownerId: userId });
+    const investor = await Investor.findOne({ userId });
+
+    if (!company && !investor) {
+      return res.status(404).json({
+        message: "No wallet found for this user",
+      });
+    }
+
+    const walletOwner = company || investor;
+    const ownerType = company ? "Company" : "Investor";
+
+    return res.status(200).json({
+      message: "Wallet fetched successfully",
+      ownerType,
+      ownerId: walletOwner._id,
+      wallet: walletOwner.wallet,
+    });
+  } catch (error) {
+    console.error("ERROR FETCHING WALLET:", error);
+    return res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
+
+
