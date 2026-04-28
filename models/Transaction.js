@@ -35,7 +35,7 @@ const transactionSchema = new mongoose.Schema(
 
     senderType: {
       type: String,
-      enum: ["Investor", "Company", "Platform", "External"]
+      enum: ["INVESTOR", "COMPANY", "PLATFORM", "EXTERNAL"]
     },
 
     receiverId: {
@@ -46,7 +46,7 @@ const transactionSchema = new mongoose.Schema(
 
     receiverType: {
       type: String,
-      enum: ["Investor", "Company", "Platform", "External"]
+      enum: ["INVESTOR", "COMPANY", "PLATFORM", "EXTERNAL"]
     },
 
     amount: {

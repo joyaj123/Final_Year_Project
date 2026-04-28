@@ -11,7 +11,7 @@ const dealSchema = new mongoose.Schema(
 
     companyId: { //done
       type: mongoose.Schema.Types.ObjectId,
-      ref: "companies",
+      ref: "Company",
       required: true,
       index: true,
     },

@@ -1,4 +1,5 @@
 import Company from "../models/Company.js";
+import { randomInt } from "crypto";
 
 //GET COMPANIES
 export const getCompanies=async(req,res)=>{
@@ -62,19 +63,47 @@ export const updateCompany=async (req, res) => {
   }
 
 };
+const generateRegistrationNumber = async () => {
+  let registrationNumber;
+  let exists = true;
 
+  while (exists) {
+    const year = new Date().getFullYear();
+    const timestamp = Date.now();
+    const randomPart = Math.floor(1000 + Math.random() * 9000);
+
+    registrationNumber = `REG-${year}-${timestamp}-${randomPart}`;
+
+    exists = await Company.exists({ registrationNumber });
+  }
+
+  return registrationNumber;
+};
 export const listing = async (req, res) => {
   try {
-    const { funding, ...rest } = req.body;
+    const { funding = {}, ...rest } = req.body;
+
+    const generatedRegistrationNumber = await generateRegistrationNumber();
+
+    const targetAmount = Number(funding.targetAmount);
+    const equityOffered = Number(funding.equityOffered);
+    const totalShares = Number(funding.totalShares);
 
     const company = await Company.create({
       ...rest,
       ownerId: req.userId,
+      registrationNumber: generatedRegistrationNumber,
       status: "PENDING_REVIEW",
       funding: {
         ...funding,
-        pricePerPercent: funding?.targetAmount / funding?.equityOffered,
-        sharePrice: funding?.targetAmount / funding?.totalShares,
+        pricePerPercent:
+          targetAmount && equityOffered
+            ? targetAmount / equityOffered
+            : undefined,
+        sharePrice:
+          targetAmount && totalShares
+            ? targetAmount / totalShares
+            : undefined,
       },
       isListing: true,
     });
@@ -84,6 +113,8 @@ export const listing = async (req, res) => {
       company,
     });
   } catch (err) {
+    console.error("LISTING ERROR:", err);
+
     if (err.name === "ValidationError") {
       const errors = Object.values(err.errors).map((e) => e.message);
 

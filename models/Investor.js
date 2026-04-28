@@ -22,6 +22,7 @@ const KYCDocumentSchema = new mongoose.Schema(
       type: String,
       required: true,
       enum: ["PENDING", "VERIFIED", "REJECTED"],
+      default: "PENDING"
     },
     expiryDate: { type: Date, required: false },
   },
@@ -180,21 +181,6 @@ const investorSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-investorSchema.pre('save',async function(){
-  try{
-
-    if(this.preferredSectors){
-      const preferredSectors = await mongoose.model('sectors').findById(this.preferredSectors);
-      if (!preferredSectors) throw new Error(`Sector ${this.preferredSectors} not found`);
-    }
-    if (this.excludedSectors) {
-      const excludedSectors = await mongoose.model('sectors').findById(this.excludedSectors);
-      if (!excludedSectors) throw new Error(`Sector ${this.excludedSectors} not found`);
-    }
-    } catch (error) {
-       console.log(error.message) ; 
-    }
-});
 
 investorSchema.pre("save", function () {
   if (this.investorType === "INDIVIDUAL") {

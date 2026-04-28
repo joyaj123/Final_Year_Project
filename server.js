@@ -2,6 +2,8 @@ import express from "express";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
+import cors from "cors";
+
 
 dotenv.config();
 
@@ -46,6 +48,13 @@ try {
 
 
 const app = express();
+
+
+app.use(cors({
+  origin: "http://localhost:3000",
+  credentials: true
+}));
+
 
 // Middleware
 app.use(express.json()); // Parse JSON bodies , request with Content-Type: application/json

@@ -1,3 +1,5 @@
+import { authMiddleware } from "../middlewar/authMiddlewar.js";
+import { roleMiddleware } from "../middlewar/roleMiddleware.js";
 import express from "express";
 const router = express.Router();
 import {
@@ -5,8 +7,14 @@ import {
   createTransaction,
   getTransactionById,
   updateTransaction,
-  deleteTransaction
+  deleteTransaction,
+  depositToWallet,
+  withdrawFromWallet
 } from "../controllers/transaction.controller.js";
+
+
+router.post("/deposit", authMiddleware, roleMiddleware("INVESTOR"), depositToWallet);
+router.post("/withdraw", authMiddleware, roleMiddleware("INVESTOR"), withdrawFromWallet);
 
 router.get("/", getAllTransactions);
 router.post("/", createTransaction);

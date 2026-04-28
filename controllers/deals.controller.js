@@ -132,21 +132,27 @@ const deleteDeal = async (req, res) => {
     res.status(500).json({message: error.message});
   }
  }
-export const getActiveDeals = async (req,res) =>{
-  try{
+ 
+ export const getActiveDeals = async (req, res) => {
+  try {
     const deals = await Deal.find({
-      status : "OPEN",
-      adminStatus : "APPROVED",
-      "fundingProgress.remainingAmount": { $gt: 0 }
+      status: "OPEN",
+      adminStatus: "APPROVED",
+      "fundingProgress.remainingAmount": { $gt: 0 },
+    })
+      .select(
+        "title description investmentTerms fundingProgress companyId image imageUrl sector expectedROI"
+      )
+      .populate({
+        path: "companyId",
+        select: "name details classification sector",
+      });
 
-    }).select('title  description investmentTerms fundingProgress ') ;
-    
-    res.status(200).json({deals});
+    res.status(200).json({ deals });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
-  catch(error){
-    res.status(500).json({message : error.message}) ; 
-  }
-}
+};
 
 
 const generateDealNumber = () => {
@@ -269,7 +275,41 @@ export const calculateInvestment = ({ deal, amount }) => {
   };
 };
 
-// 4. Create transaction
+// 4. Update Invetor Wallet
+export const updateInvestorWalletAfterInvestment = async ({
+  investorId,
+  amount,
+  session,
+}) => {
+  const investor = await Investor.findById(investorId).session(session);
+
+  if (!investor) {
+    throw new Error("Investor not found");
+  }
+
+  if (!investor.wallet) {
+    throw new Error("Wallet not found");
+  }
+
+  const currentBalance = Number(investor.wallet.balance);
+  const lockedBalance = Number(investor.wallet.lockedBalance);
+  const currentTotalInvested = Number(investor.wallet.totalInvested);
+
+  const availableBalance = currentBalance - lockedBalance;
+
+  if (availableBalance < amount) {
+    throw new Error("Insufficient available balance");
+  }
+
+  investor.wallet.balance = Number(currentBalance - amount);
+  investor.wallet.totalInvested = Number(currentTotalInvested + amount);
+
+  await investor.save({ session });
+
+  return investor.wallet;
+};
+
+// 5. Create transaction
 const generateTransactionNumber = () => {
   const random = Math.floor(1000 + Math.random() * 9000);
   return `TRANSAC-${Date.now()}-${random}`;
@@ -306,7 +346,7 @@ export const createTransaction = async ({
   return transaction;
 };
 
-// 5. Create or update ownership
+// 6. Create or update ownership
 export const createOrUpdateOwnership = async ({
   investorId,
   deal,
@@ -373,7 +413,7 @@ export const createOrUpdateOwnership = async ({
   return ownership;
 };
 
-// 6. Update deal funding
+// 7. Update deal funding
 export const updateDealFunding = async ({ deal, amount, session }) => {
   const currentAmountRaised = Number(deal.fundingProgress?.amountRaised || 0);
   const currentInvestorCount = Number(deal.fundingProgress?.investorCount || 0);
@@ -421,6 +461,12 @@ export const executeInvestment = async ({
 
       const calculation = calculateInvestment({ deal, amount });
 
+      const wallet = await updateInvestorWalletAfterInvestment({
+        investorId,
+        amount,
+        session,
+      });
+
       const transaction = await createTransaction({
         investorId,
         deal,
@@ -444,6 +490,7 @@ export const executeInvestment = async ({
 
       result = {
         message: "Investment successful",
+        wallet,
         ownership,
         transaction,
         calculation,
@@ -482,6 +529,7 @@ export const investInDeal = async (req, res) => {
     });
   }
 };
+
 
 export {
   postDeal,
