@@ -3,13 +3,13 @@ import mongoose from "mongoose";
 
 const distributionSchema = new mongoose.Schema(
   {
-    distributionNumber: {
+    distributionNumber: { // generated 
       type: String,
       required: true,
       unique: true,
     },
 
-    companyId: {
+    companyId: { //from the cookies 
       type: mongoose.Schema.Types.ObjectId,
       ref: "Company",
       required: true,
@@ -23,23 +23,13 @@ const distributionSchema = new mongoose.Schema(
       index: true,
     },
 
-    status: {
-      type: String,
-      enum: ["SCHEDULED", "PROCESSING", "COMPLETED"],
-      required: true,
-      index: true,
-    },
+    
 
-    scheduledDate: {
-      type: Date,
-      required: true,
-      index: true,
-    },
+   
 
-    processedAt: Date,
 
     // Distribution Amount
-    totalAmount: {
+    totalAmount: { //all the amount distrivuted to the investors 
       type: mongoose.Schema.Types.Decimal128,
       required: true,
     },
@@ -49,17 +39,9 @@ const distributionSchema = new mongoose.Schema(
       required: true,
     },
 
-    periodStart: {
-      type: Date,
-      required: true,
-    },
 
-    periodEnd: {
-      type: Date,
-      required: true,
-    },
-
-    profitAmount: {
+ 
+    profitAmount: {//Actual profit used to calculate distribution
       type: mongoose.Schema.Types.Decimal128,
       required: true,
     },
@@ -70,7 +52,7 @@ const distributionSchema = new mongoose.Schema(
     },
 
     // Payouts (Embedded Array)
-    payouts: [
+    payouts: [ //array of the investors that will receive the money 
       {
         investorId: {
           type: mongoose.Schema.Types.ObjectId,
@@ -92,6 +74,7 @@ const distributionSchema = new mongoose.Schema(
           type: String,
           enum: ["PENDING", "PROCESSING", "PAID", "FAILED"],
           required: true,
+          default: "PAID" 
         },
 
         transactionId: {

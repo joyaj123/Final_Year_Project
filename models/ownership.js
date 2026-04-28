@@ -9,7 +9,7 @@ const ownershipRecordSchema = new mongoose.Schema(
       required: true,
     },
 
-    companyId: {
+    companyId: { 
       type: mongoose.Schema.Types.ObjectId,
       ref: "Company",
       required: true,
@@ -37,7 +37,7 @@ const ownershipRecordSchema = new mongoose.Schema(
       required: true,
     },
 
-    ownershipPercentage: {
+    ownershipPercentage: {  
       type: Number,
       required: true,
     },

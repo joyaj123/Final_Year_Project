@@ -134,6 +134,7 @@ const CompanySchema = new mongoose.Schema(
       currency: { type: String, required: true },
       audited: { type: Boolean, required: true },
     },
+    
 
     valuation: {
       preMoneyValuation: { type: mongoose.Schema.Types.Decimal128, required: true },

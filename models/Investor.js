@@ -44,7 +44,7 @@ const KYCSchema = new mongoose.Schema(
     },
     verifiedAt: { type: Date, required: false },
     expiresAt: { type: Date, required: false },
-    reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: "users", required: false },
+    reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: false },
     rejectionReason: { type: String, required: false },
     documents: {
       type: [KYCDocumentSchema],

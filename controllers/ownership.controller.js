@@ -1,4 +1,4 @@
-import Ownership from "../models/ownership.js";
+import Ownership from "../models/Ownership.js";
 
 //GET OWNERSHIPS
 export const getOwnerships=async(req,res)=>{

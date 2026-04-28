@@ -11,7 +11,7 @@ const transactionSchema = new mongoose.Schema(
 
     type: {
       type: String,
-      enum: ["DEPOSIT", "WITHDRAWAL", "INVESTMENT", "DISTRIBUTION"],
+      enum: ["DEPOSIT", "WITHDRAWAL", "INVESTMENT", "DISTRIBUTION","FUNDING_RELEASE"],
       required: true,
       index: true
     },
@@ -33,11 +33,10 @@ const transactionSchema = new mongoose.Schema(
       index: true
     },
 
-    senderType: {
-      type: String,
-      enum: ["Investor", "Company", "Platform", "External"]
-    },
-
+   senderType: {
+  type: String,
+  enum: ["INVESTOR", "COMPANY", "PLATFORM", "EXTERNAL"]
+},
     receiverId: {
       type: mongoose.Schema.Types.ObjectId,
       refPath: "receiverType",
@@ -45,10 +44,9 @@ const transactionSchema = new mongoose.Schema(
     },
 
     receiverType: {
-      type: String,
-      enum: ["Investor", "Company", "Platform", "External"]
-    },
-
+  type: String,
+  enum: ["INVESTOR", "COMPANY", "PLATFORM", "EXTERNAL"]
+},
     amount: {
       type: mongoose.Schema.Types.Decimal128,
       required: true
