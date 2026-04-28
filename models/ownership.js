@@ -78,7 +78,7 @@ const ownershipRecordSchema = new mongoose.Schema(
       {
         dealId: {
           type: mongoose.Schema.Types.ObjectId,
-          ref: "deals",
+          ref: "Deal",
           required: true,
         },
 

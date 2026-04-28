@@ -1,4 +1,5 @@
 import Company from "../models/Company.js";
+import AuditLogs from "../models/audit_Logs.js";
 import Investor from "../models/Investor.js"; // change name if your file is different
 import mongoose from "mongoose";
 import Transaction from "../models/Transaction.js";
@@ -103,6 +104,74 @@ export const listing = async (req, res) => {
     });
   }
 };
+export const reviewCompany=async(req,res)=>{
+  try{
+    const companyId=req.params.id;
+    const {decision,notes}=req.body;
+
+    //we need to check if company exists
+    const company= await Company.findById(companyId);
+
+    if(!company){
+      return res.status(404).json({message:"Company not found"});
+    }
+    const before = company.toObject() ;
+    //check status
+    if(company.status!=="PENDING_REVIEW"){
+      return res.status(400).json({message: "Company has been reviewed"});
+    }
+    const cleanDecision = decision?.toLowerCase().trim();
+    if(cleanDecision==="approve"){
+      company.status="APPROVED";
+      company.approvedAt=new Date();
+      company.approvedBy=req.userId;
+      company.isListing=true;
+    }
+    else if (cleanDecision === "reject") {
+      company.status = "REJECTED";
+      company.isListing = false;
+    } 
+    else{
+      return res.status(400).json({ message: "Invalid decision" });
+    }
+    await company.save();
+
+    const after = company.toObject();
+
+await AuditLogs.create({
+  action: cleanDecision === "approve"
+    ? "COMPANY_APPROVED"
+    : "COMPANY_REJECTED",
+
+  entityType: "COMPANY",
+  entityId: company._id,
+  userId: req.userId|| null,
+
+  userType: (req.user?.role || "ADMIN").trim().toUpperCase(),
+
+  changes: {
+    before,
+    after:company.toObject()
+  },
+
+  metadata: {
+    ipAddress: req.ip || "unknown",
+    userAgent: req.headers["user-agent"] || "unknown"
+  }
+}); 
+  await AuditLogs.save();
+
+     res.json({message: `Company ${decision}d successfully`, company});
+  }catch(error){
+    console.error(" FULL ERROR:", error);
+  console.error(" STACK:", error.stack);
+
+  return res.status(500).json({
+    message: error.message,
+    error: error.stack
+  });
+}
+}
 
 
 export const getMyCompany = async (req, res) => {

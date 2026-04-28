@@ -15,7 +15,7 @@ const auditLogsSchema=new mongoose.Schema({
         index:true,},
     userId:{
         type:mongoose.Schema.Types.ObjectId,
-        ref:"Users",
+        ref:"User",
         required:true,
         index:true,},
     userType:{

@@ -1,14 +1,16 @@
+import { authMiddleware } from "../middlewar/authMiddlewar.js";
+import { roleMiddleware } from "../middlewar/roleMiddleware.js";
 import express from "express";
 const router=express.Router();
 import{
-    getOwnerships,
-    getOwnership,
-    postOwnership,
-    deleteOwnership} from "../controllers/ownership.controller.js";
+    getAudit_Logs,
+    getAudit_Log,
+    postAudit_Log,
+    deleteAudit_Log} from "../controllers/audit_Logs.controller.js";
 
-router.get("/",getOwnerships);
-router.get("/:id",getOwnership);
-router.post("/",postOwnership);
-router.delete("/:id",deleteOwnership);
+router.get("/",getAudit_Logs);
+router.get("/:id",getAudit_Log);
+router.post("/audit",authMiddleware,roleMiddleware("ADMIN"),postAudit_Log);
+router.delete("/:id",deleteAudit_Log);
 
 export default router;

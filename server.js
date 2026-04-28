@@ -37,6 +37,8 @@ import companyRoute from "./routes/companies.route.js";
 import ownershipRoute from "./routes/ownership.route.js";
 import auditLogsRoute from "./routes/audit_Logs.route.js";
 import notificationRoute from "./routes/notification.route.js";
+import adminRoute from "./routes/admin.route.js";
+import AuditLogsRoute from "./routes/audit_Logs.route.js";
 
 
 /* FOR DEBBUGING EZA 3EZTA BA3DEN 
@@ -49,6 +51,7 @@ try {
 
 
 const app = express();
+
 
 app.use(cors({
   origin: "http://localhost:3000",
@@ -81,6 +84,8 @@ app.use("/company", companyRoute);
 app.use("/ownership", ownershipRoute);
 app.use("/audit-logs", auditLogsRoute);
 app.use("/notifications", notificationRoute); 
+app.use("/admin",adminRoute);
+app.use("/audit_Logs",auditLogsRoute);
 //app.use("/api/users", usersRoute); 
 
 // MongoDB Connection
@@ -122,4 +127,4 @@ app.listen(PORT, () => {
   console.log(`   GET  http://localhost:${PORT}/deals`);
 });
 
-//ALWAYS RUN SERVER.JS THAN GO TO LOCAL HOST TO CHECK THE ROOT THAN SEND REQUESTS 
+//ALWAYS RUN SERVER.JS THAN GO TO LOCAL HOST TO CHECK THE ROOT THAN SEND REQUESTS

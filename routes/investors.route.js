@@ -9,9 +9,11 @@ import {
     getInvestorById,
     updateInvestor,
     deleteInvestor,
-    onboarding} from "../controllers/investor.controller.js";
+    onboarding,
+   reviewKyc} from "../controllers/investor.controller.js";
 
 router.post("/onboarding", authMiddleware, roleMiddleware("INVESTOR"), onboarding);
+router.put("/:id/decision",authMiddleware,roleMiddleware("ADMIN"),reviewKyc);
 
 router.get("/", getAllInvestors);
 router.get("/:id", getInvestorById);

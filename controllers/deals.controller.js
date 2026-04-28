@@ -3,6 +3,7 @@ import Company from "../models/Company.js";
 import Ownership from "../models/Ownership.js";
 import Transaction from "../models/Transaction.js";
 import Investor from "../models/Investor.js";
+import AuditLogs from "../models/audit_Logs.js";
 import mongoose from "mongoose";
 
 // CREATE a deal
@@ -25,7 +26,7 @@ const getAllDeal = async (req, res) => {
     const deals = await Deal.find()
       .populate("companyId", "name sectorId")
       .populate("companySnapshot.sectorId", "name")
-      .populate("adminReview.reviewedBy", "name"); // populate admin who reviewed
+      .populate("adminReview.reviewedBy", "email role"); // populate admin who reviewed
 
     console.log(`Found ${deals.length} deals`);
     res.status(200).json(deals);
@@ -38,10 +39,7 @@ const getAllDeal = async (req, res) => {
 // GET deal by ID (with populated references)
 const getDeal = async (req, res) => {
   try {
-    const deal = await Deal.findById(req.params.id)
-      .populate("companyId", "name sectorId")
-      .populate("companySnapshot.sectorId", "name")
-      .populate("adminReview.reviewedBy", "name"); // populate admin who reviewed
+    const deal = await Deal.findById(req.params.id); // populate admin who reviewed
 
     if (!deal) {
       return res.status(404).json({ message: "Deal not found" });
@@ -104,6 +102,7 @@ const deleteDeal = async (req, res) => {
     if(!deal){
       return res.status(404).json({message: "Deal not found"});
     }
+    const before = deal.toObject() ;
     //check if the status is not draft and the admin status is not pending 
     if(deal.status!== "DRAFT" && deal.adminStatus!== "PENDING"){
       return res.status(400).json({message: "Deal has been reviewed"});
@@ -126,6 +125,26 @@ const deleteDeal = async (req, res) => {
       notes: notes || null,
     };
     await deal.save()
+     const after ={...deal.toObject()};
+     try{
+        await AuditLogs.create({
+          action:cleanDecision === "approve" ? "DEAL_APPROVED" :"DEAL_REJECTED",
+          entityType:"DEAL",
+          entityId:deal._id,
+          userId:req.userId,
+          userType:"ADMIN",
+          changes:{
+            before,
+            after
+          },
+          metadata:{
+            ipAddress:req.ip,
+            userAgent:req.header["user-agent"]
+          }
+        });}catch(err){
+           console.error("AUDIT ERROR",err);
+        }
+       await AuditLogs.save();
     res.json({message: `Deal ${decision}d successfully`, deal});
 
   }catch(error){
