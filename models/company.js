@@ -110,7 +110,7 @@ const CompanySchema = new mongoose.Schema(
       targetAmount: { type: mongoose.Schema.Types.Decimal128, required: true },
       minimumInvestment: { type: mongoose.Schema.Types.Decimal128, required: true },
       maximumInvestment: { type: mongoose.Schema.Types.Decimal128 },
-      currency: { type: String, required: true },
+      currency: { type: String, required: true, default:0 },
       equityOffered: { type: Number, required: true },
       pricePerPercent: { type: mongoose.Schema.Types.Decimal128 },
       totalShares: { type: Number, required: true },
@@ -131,7 +131,7 @@ const CompanySchema = new mongoose.Schema(
       expenses: { type: mongoose.Schema.Types.Decimal128, required: true },
       ebitda: { type: mongoose.Schema.Types.Decimal128 },
       asOfDate: { type: Date, required: true },
-      currency: { type: String, required: true },
+      currency: { type: String, required: true ,default:0},
       audited: { type: Boolean, required: true },
     },
     
@@ -139,7 +139,7 @@ const CompanySchema = new mongoose.Schema(
     valuation: {
       preMoneyValuation: { type: mongoose.Schema.Types.Decimal128, required: true },
       postMoneyValuation: { type: mongoose.Schema.Types.Decimal128, required: true },
-      valuationMethod: { type: String},
+      valuationMethod: { type: String, required: false },
       revenueMultiple: { type: Number },
       ebitdaMultiple: { type: Number },
       valuedAt: { type: Date, required: true },

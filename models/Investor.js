@@ -22,6 +22,7 @@ const KYCDocumentSchema = new mongoose.Schema(
       type: String,
       required: true,
       enum: ["PENDING", "VERIFIED", "REJECTED"],
+      default: "PENDING"
     },
     expiryDate: { type: Date, required: false },
   },

@@ -92,6 +92,7 @@ export const onboarding = async (req, res) => {
           ...req.body.kyc,
           level: kycLevel,
        },
+       
       isOnboarded: true,
     });
 
