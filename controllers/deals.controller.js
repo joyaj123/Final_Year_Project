@@ -1,6 +1,6 @@
 import Deal from "../models/deals.js";
 import Company from "../models/Company.js";
-import Ownership from "../models/ownership.js";
+import Ownership from "../models/Ownership.js";
 import Transaction from "../models/Transaction.js";
 import Investor from "../models/Investor.js";
 import mongoose from "mongoose";
@@ -149,6 +149,37 @@ export const getActiveDeals = async (req,res) =>{
 }
 
 
+export const getCompanyDeals = async (req, res) => {
+  try {
+    // 1. Get logged-in user ID from auth middleware
+    const userId = req.user.id;
+
+    // 2. Find company owned by this user
+    const company = await Company.findOne({ ownerId: userId });
+
+    if (!company) {
+      return res.status(404).json({
+        message: "Company not found for this user",
+        
+      });
+    }
+
+    // 3. Get all deals for this company
+    const deals = await Deal.find({
+      companyId: company._id,
+       status : "OPEN",
+      adminStatus : "APPROVED",
+      "fundingProgress.remainingAmount": { $gt: 0 }
+    })
+
+    // 4. Return data
+    res.status(200).json({ deals });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 const generateDealNumber = () => {
   const random = Math.floor(1000 + Math.random() * 9000);
   return `DEAL-${Date.now()}-${random}`;
@@ -170,11 +201,12 @@ export const createDeal = async (req, res) => {
       companyId: company._id,
 
       investmentTerms: {
-        ...investmentTerms,
-        pricePerPercent: investmentTerms?.targetRaise / investmentTerms?.equityOfferedPct,
-        totalSharesOffered: investmentTerms?.targetRaise / investmentTerms?.pricePerShare,
-        valuation: investmentTerms?.targetRaise / (investmentTerms?.equityOfferedPct / 100)
-      },
+  ...investmentTerms,
+  currency: investmentTerms?.currency || "USD",
+  pricePerPercent: investmentTerms?.targetRaise / investmentTerms?.equityOfferedPct,
+  totalSharesOffered: investmentTerms?.targetRaise / investmentTerms?.pricePerShare,
+  valuation: investmentTerms?.targetRaise / (investmentTerms?.equityOfferedPct / 100)
+},
 
       fundingProgress: {
         ...fundingProgress,
@@ -289,9 +321,9 @@ export const createTransaction = async ({
         type: "INVESTMENT",
         status: "COMPLETED",
         senderId: investorId,
-        senderType: "Investor",
-        receiverId: deal.companyId,
-        receiverType: "Company",
+        senderType: "INVESTOR",
+        receiverId: null,
+        receiverType: "PLATFORM",
         amount,
         currency: deal.investmentTerms.currency,
         netAmount: amount,
@@ -391,11 +423,62 @@ export const updateDealFunding = async ({ deal, amount, session }) => {
   if (newAmountRaised >= targetRaise) {
     deal.status = "FUNDED";
     deal.closedAt = new Date();
+
+    await releaseFundsToCompany({ deal, session }); ////////// ADD THIS
+
   }
 
+  
   await deal.save({ session });
-
   return deal;
+};
+
+const releaseFundsToCompany = async ({ deal, session }) => {
+  const company = await Company.findById(deal.companyId).session(session);
+
+  if (!company) {
+    throw new Error("Company not found");
+  }
+
+  const amount = Number(deal.fundingProgress.amountRaised || 0);
+
+  const currentBalance = Number(company.wallet?.balance?.toString() || 0);
+  const newBalance = currentBalance + amount;
+
+  company.wallet.balance = mongoose.Types.Decimal128.fromString(newBalance.toString());
+  company.markModified("wallet");
+
+  await company.save({ session });
+
+  // CREATE ONE TRANSACTION (IMPORTANT)
+  await Transaction.create(
+  [
+    {
+      transactionNumber: "TXN-" + Date.now(),
+      type: "FUNDING_RELEASE",
+      status: "COMPLETED",
+
+      senderId: null,
+      senderType: "PLATFORM",
+
+      receiverId: company._id,
+      receiverType: "COMPANY",
+
+      amount: mongoose.Types.Decimal128.fromString(amount.toString()),
+      netAmount: mongoose.Types.Decimal128.fromString(amount.toString()),
+      fee: 0,
+      currency: deal.investmentTerms.currency,
+
+      paymentDetails: {
+        method: "WALLET", // ✅ ADD THIS
+      },
+
+      description: "Deal funding released to company",
+      dealId: deal._id,
+    },
+  ],
+  { session }
+);
 };
 
 // Main function

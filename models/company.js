@@ -17,7 +17,7 @@ const CompanySchema = new mongoose.Schema(
   {
     ownerId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "users",
+      ref: "User",
       required: true,
       index: true,
     },
@@ -69,7 +69,7 @@ const CompanySchema = new mongoose.Schema(
 
     approvedBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "users",
+      ref: "User",
     },
 
     details: {
@@ -134,6 +134,7 @@ const CompanySchema = new mongoose.Schema(
       currency: { type: String, required: true },
       audited: { type: Boolean, required: true },
     },
+    
 
     valuation: {
       preMoneyValuation: { type: mongoose.Schema.Types.Decimal128, required: true },
