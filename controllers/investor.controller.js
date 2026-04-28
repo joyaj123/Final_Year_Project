@@ -131,9 +131,11 @@ export const reviewKyc = async(req,res)=>{
     }
     const before = investor.toObject() ;
     //check status
-    if(investor.kyc.status==="APPROVED"){
-       return res.status(400).json({ message: "KYC already approved" });
-    }
+    const allowedStatuses = ["IN_PROGRESS", "NOT_STARTED"];
+
+if (!allowedStatuses.includes(investor.kyc?.status)) {
+  return res.status(400).json({ message: "KYC has been reviewed" });
+}
     const cleanDecision = decision?.toLowerCase().trim();
     if(cleanDecision==="approve"){
       investor.kyc.status="APPROVED";
@@ -172,7 +174,6 @@ export const reviewKyc = async(req,res)=>{
             userAgent:req.header["user-agent"]
           }
         });
-        await AuditLogs.save();
 
     return res.json({
       message: `KYC ${cleanDecision}d successfully`,
