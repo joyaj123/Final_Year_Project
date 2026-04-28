@@ -17,7 +17,7 @@ const CompanySchema = new mongoose.Schema(
   {
     ownerId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "users",
+      ref: "User",
       required: true,
       index: true,
     },
@@ -69,7 +69,7 @@ const CompanySchema = new mongoose.Schema(
 
     approvedBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "users",
+      ref: "User",
     },
 
     details: {
@@ -86,14 +86,14 @@ const CompanySchema = new mongoose.Schema(
     classification: {
       sectorId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "sectors",
+        ref: "Sectors",
         required: true,
         index: true,
       },
 
       subSectorId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "subsectors",
+        ref: "Subsector",
       },
 
       businessType: {
@@ -134,6 +134,7 @@ const CompanySchema = new mongoose.Schema(
       currency: { type: String, required: true ,default:0},
       audited: { type: Boolean, required: true },
     },
+    
 
     valuation: {
       preMoneyValuation: { type: mongoose.Schema.Types.Decimal128, required: true },
@@ -197,11 +198,11 @@ CompanySchema.pre('save',async function(){
   try{
 
     if(this.classification?.sectorId){
-      const sector = await mongoose.model('sectors').findById(this.classification.sectorId);
+      const sector = await mongoose.model('Sector').findById(this.classification.sectorId);
       if (!sector) throw new Error(`Sector ${this.classification.sectorId} not found`);
     }
     if (this.classification?.subsectorId) {
-      const subsector = await mongoose.model('subsectors').findById(this.classification.subsectorId);
+      const subsector = await mongoose.model('Subsector').findById(this.classification.subsectorId);
       if (!subsector) throw new Error(`Subsector ${this.classification.subsectorId} not found`);
     }
     } catch (error) {

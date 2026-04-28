@@ -153,13 +153,13 @@ const dealSchema = new mongoose.Schema(
 
       sectorId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "sectors",
+        ref: "Sector",
         
       },
 
       subsectorId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "subsectors",
+        ref: "Subsector",
         default: null,
          
       },
@@ -212,7 +212,7 @@ const dealSchema = new mongoose.Schema(
     adminReview: {
       reviewedBy: {
         type: mongoose.Schema.Types.ObjectId, //users, check in the controller that the user is an amdin
-        ref: "admins",
+        ref: "User",
         default: null,
       },
       
@@ -247,13 +247,13 @@ dealSchema.pre('save', async function() {
 
     // Check sector exists
     if (this.companySnapshot?.sectorId) {
-      const sector = await mongoose.model('sectors').findById(this.companySnapshot.sectorId);
+      const sector = await mongoose.model('Sector').findById(this.companySnapshot.sectorId);
       if (!sector) throw new Error(`Sector ${this.companySnapshot.sectorId} not found`);
     }
 
     // Check subsector exists (optional)
     if (this.companySnapshot?.subsectorId) {
-      const subsector = await mongoose.model('subsectors').findById(this.companySnapshot.subsectorId);
+      const subsector = await mongoose.model('Subsector').findById(this.companySnapshot.subsectorId);
       if (!subsector) throw new Error(`Subsector ${this.companySnapshot.subsectorId} not found`);
     }
 
@@ -264,6 +264,6 @@ dealSchema.pre('save', async function() {
 });
 
 
-const Deal = mongoose.model("Deal", dealSchema);
+const Deal = mongoose.models.Deal ||mongoose.model("Deal", dealSchema);
 
 export default Deal;

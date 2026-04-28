@@ -1,8 +1,9 @@
 import Deal from "../models/deals.js";
 import Company from "../models/Company.js";
-import Ownership from "../models/ownership.js";
+import Ownership from "../models/Ownership.js";
 import Transaction from "../models/Transaction.js";
 import Investor from "../models/Investor.js";
+import AuditLogs from "../models/audit_Logs.js";
 import mongoose from "mongoose";
 
 // CREATE a deal
@@ -25,7 +26,7 @@ const getAllDeal = async (req, res) => {
     const deals = await Deal.find()
       .populate("companyId", "name sectorId")
       .populate("companySnapshot.sectorId", "name")
-      .populate("adminReview.reviewedBy", "name"); // populate admin who reviewed
+      .populate("adminReview.reviewedBy", "email role"); // populate admin who reviewed
 
     console.log(`Found ${deals.length} deals`);
     res.status(200).json(deals);
@@ -38,10 +39,7 @@ const getAllDeal = async (req, res) => {
 // GET deal by ID (with populated references)
 const getDeal = async (req, res) => {
   try {
-    const deal = await Deal.findById(req.params.id)
-      .populate("companyId", "name sectorId")
-      .populate("companySnapshot.sectorId", "name")
-      .populate("adminReview.reviewedBy", "name"); // populate admin who reviewed
+    const deal = await Deal.findById(req.params.id); // populate admin who reviewed
 
     if (!deal) {
       return res.status(404).json({ message: "Deal not found" });
@@ -104,6 +102,7 @@ const deleteDeal = async (req, res) => {
     if(!deal){
       return res.status(404).json({message: "Deal not found"});
     }
+    const before = deal.toObject() ;
     //check if the status is not draft and the admin status is not pending 
     if(deal.status!== "DRAFT" && deal.adminStatus!== "PENDING"){
       return res.status(400).json({message: "Deal has been reviewed"});
@@ -126,6 +125,26 @@ const deleteDeal = async (req, res) => {
       notes: notes || null,
     };
     await deal.save()
+     const after ={...deal.toObject()};
+     try{
+        await AuditLogs.create({
+          action:cleanDecision === "approve" ? "DEAL_APPROVED" :"DEAL_REJECTED",
+          entityType:"DEAL",
+          entityId:deal._id,
+          userId:req.userId,
+          userType:"ADMIN",
+          changes:{
+            before,
+            after
+          },
+          metadata:{
+            ipAddress:req.ip,
+            userAgent:req.header["user-agent"]
+          }
+        });}catch(err){
+           console.error("AUDIT ERROR",err);
+        }
+       await AuditLogs.save();
     res.json({message: `Deal ${decision}d successfully`, deal});
 
   }catch(error){
@@ -155,6 +174,37 @@ const deleteDeal = async (req, res) => {
 };
 
 
+export const getCompanyDeals = async (req, res) => {
+  try {
+    // 1. Get logged-in user ID from auth middleware
+    const userId = req.user.id;
+
+    // 2. Find company owned by this user
+    const company = await Company.findOne({ ownerId: userId });
+
+    if (!company) {
+      return res.status(404).json({
+        message: "Company not found for this user",
+        
+      });
+    }
+
+    // 3. Get all deals for this company
+    const deals = await Deal.find({
+      companyId: company._id,
+       status : "OPEN",
+      adminStatus : "APPROVED",
+      "fundingProgress.remainingAmount": { $gt: 0 }
+    })
+
+    // 4. Return data
+    res.status(200).json({ deals });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 const generateDealNumber = () => {
   const random = Math.floor(1000 + Math.random() * 9000);
   return `DEAL-${Date.now()}-${random}`;
@@ -176,11 +226,12 @@ export const createDeal = async (req, res) => {
       companyId: company._id,
 
       investmentTerms: {
-        ...investmentTerms,
-        pricePerPercent: investmentTerms?.targetRaise / investmentTerms?.equityOfferedPct,
-        totalSharesOffered: investmentTerms?.targetRaise / investmentTerms?.pricePerShare,
-        valuation: investmentTerms?.targetRaise / (investmentTerms?.equityOfferedPct / 100)
-      },
+  ...investmentTerms,
+  currency: investmentTerms?.currency || "USD",
+  pricePerPercent: investmentTerms?.targetRaise / investmentTerms?.equityOfferedPct,
+  totalSharesOffered: investmentTerms?.targetRaise / investmentTerms?.pricePerShare,
+  valuation: investmentTerms?.targetRaise / (investmentTerms?.equityOfferedPct / 100)
+},
 
       fundingProgress: {
         ...fundingProgress,
@@ -329,9 +380,9 @@ export const createTransaction = async ({
         type: "INVESTMENT",
         status: "COMPLETED",
         senderId: investorId,
-        senderType: "Investor",
-        receiverId: deal.companyId,
-        receiverType: "Company",
+        senderType: "INVESTOR",
+        receiverId: null,
+        receiverType: "PLATFORM",
         amount,
         currency: deal.investmentTerms.currency,
         netAmount: amount,
@@ -431,11 +482,62 @@ export const updateDealFunding = async ({ deal, amount, session }) => {
   if (newAmountRaised >= targetRaise) {
     deal.status = "FUNDED";
     deal.closedAt = new Date();
+
+    await releaseFundsToCompany({ deal, session }); ////////// ADD THIS
+
   }
 
+  
   await deal.save({ session });
-
   return deal;
+};
+
+const releaseFundsToCompany = async ({ deal, session }) => {
+  const company = await Company.findById(deal.companyId).session(session);
+
+  if (!company) {
+    throw new Error("Company not found");
+  }
+
+  const amount = Number(deal.fundingProgress.amountRaised || 0);
+
+  const currentBalance = Number(company.wallet?.balance?.toString() || 0);
+  const newBalance = currentBalance + amount;
+
+  company.wallet.balance = mongoose.Types.Decimal128.fromString(newBalance.toString());
+  company.markModified("wallet");
+
+  await company.save({ session });
+
+  // CREATE ONE TRANSACTION (IMPORTANT)
+  await Transaction.create(
+  [
+    {
+      transactionNumber: "TXN-" + Date.now(),
+      type: "FUNDING_RELEASE",
+      status: "COMPLETED",
+
+      senderId: null,
+      senderType: "PLATFORM",
+
+      receiverId: company._id,
+      receiverType: "COMPANY",
+
+      amount: mongoose.Types.Decimal128.fromString(amount.toString()),
+      netAmount: mongoose.Types.Decimal128.fromString(amount.toString()),
+      fee: 0,
+      currency: deal.investmentTerms.currency,
+
+      paymentDetails: {
+        method: "WALLET", // ✅ ADD THIS
+      },
+
+      description: "Deal funding released to company",
+      dealId: deal._id,
+    },
+  ],
+  { session }
+);
 };
 
 // Main function

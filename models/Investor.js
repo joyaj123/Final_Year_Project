@@ -45,7 +45,7 @@ const KYCSchema = new mongoose.Schema(
     },
     verifiedAt: { type: Date, required: false },
     expiresAt: { type: Date, required: false },
-    reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: "users", required: false },
+    reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: false },
     rejectionReason: { type: String, required: false },
     documents: {
       type: [KYCDocumentSchema],
@@ -111,7 +111,7 @@ const investorSchema = new mongoose.Schema(
   {
     userId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "users",
+      ref: "User",
       required: true,
       unique: true,
       index: true,
@@ -161,13 +161,13 @@ const investorSchema = new mongoose.Schema(
 
     preferredSectors: {
       type: [mongoose.Schema.Types.ObjectId],
-      ref: "sectors",
+      ref: "Sectors",
       required: false,
       default: [],
     },
     excludedSectors: {
       type: [mongoose.Schema.Types.ObjectId],
-      ref: "sectors",
+      ref: "Sectors",
       required: false,
       default: [],
     },
@@ -181,6 +181,21 @@ const investorSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+investorSchema.pre('save',async function(){
+  try{
+
+    if(this.preferredSectors){
+      const preferredSectors = await mongoose.model('Sectors').findById(this.preferredSectors);
+      if (!preferredSectors) throw new Error(`Sector ${this.preferredSectors} not found`);
+    }
+    if (this.excludedSectors) {
+      const excludedSectors = await mongoose.model('Sectors').findById(this.excludedSectors);
+      if (!excludedSectors) throw new Error(`Sector ${this.excludedSectors} not found`);
+    }
+    } catch (error) {
+       console.log(error.message) ; 
+    }
+});
 
 investorSchema.pre("save", function () {
   if (this.investorType === "INDIVIDUAL") {
@@ -188,5 +203,5 @@ investorSchema.pre("save", function () {
   }
 });
 
-const Investor = mongoose.model("Investor", investorSchema);
+const Investor = mongoose.models.Investor ||mongoose.model("Investor", investorSchema);
 export default Investor;

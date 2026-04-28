@@ -1,6 +1,7 @@
 import Transaction  from "../models/Transaction.js";
-import mongoose from "mongoose";
+import Company from "../models/company.js";
 import Investor from "../models/Investor.js";
+import mongoose from "mongoose";
 
 
 export const getAllTransactions = async (req, res) => {
@@ -75,119 +76,151 @@ export const deleteTransaction = async (req, res) => {
   }
 };
 
-const generateTransactionNumber = () => {
-  const random = Math.floor(1000 + Math.random() * 9000);
-  return `TRANSACTION-${Date.now()}-${random}`;
+
+
+
+export const getMyTransactions = async (req, res) => {
+  try {
+    const userId = req.userId;
+
+    const company = await Company.findOne({ ownerId: userId });
+    const investor = await Investor.findOne({ userId });
+
+    const conditions = [];
+
+    if (company) {
+      conditions.push(
+        { senderId: company._id, senderType: "COMPANY" },
+        { receiverId: company._id, receiverType: "COMPANY" }
+      );
+    }
+
+    if (investor) {
+      conditions.push(
+        { senderId: investor._id, senderType: "INVESTOR" },
+        { receiverId: investor._id, receiverType: "INVESTOR" }
+      );
+    }
+
+    if (!conditions.length) {
+      return res.status(404).json({
+        message: "No wallet owner found for this user",
+      });
+    }
+
+    const transactions = await Transaction.find({
+      $or: conditions,
+    })
+      .populate("dealId", "title dealNumber")
+      .populate("distributionId", "distributionNumber type")
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      message: "Transactions fetched successfully",
+      count: transactions.length,
+      transactions,
+    });
+  } catch (error) {
+    console.error("ERROR FETCHING USER TRANSACTIONS:", error);
+    return res.status(500).json({
+      message: error.message,
+    });
+  }
 };
 
-// -------------------- DEPOSIT --------------------
-export const depositToWallet = async (req, res) => {
+export const withdrawFromWallet = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
-    const {
-      amount,
-      currency = "USD",
-      fee = 0,
-      description,
-      notes,
-      paymentDetails = {},
-    } = req.body;
+    const { amount, paymentDetails = {}, description, notes } = req.body;
 
     const amountValue = Number(amount);
-    const feeValue = Number(fee);
-    const currencyValue = String(currency).toUpperCase();
+    const currency = "USD";
 
-    if (!Number.isFinite(amountValue) || amountValue <= 0) {
+    if (!amountValue || amountValue <= 0) {
       throw new Error("Amount must be greater than 0");
     }
 
-    if (!Number.isFinite(feeValue) || feeValue < 0) {
-      throw new Error("Fee must be a valid number >= 0");
-    }
-
     if (!paymentDetails.method) {
-      throw new Error("paymentDetails.method is required");
+      throw new Error("Payment method is required");
     }
 
-    const netAmount = amountValue - feeValue;
+    let walletOwner = await Company.findOne({ ownerId: req.userId }).session(session);
+    let ownerType = "COMPANY";
+    let defaultDescription = "Company wallet withdrawal";
 
-    if (netAmount < 0) {
-      throw new Error("Fee cannot be greater than amount");
+    if (!walletOwner) {
+      walletOwner = await Investor.findOne({ userId: req.userId }).session(session);
+      ownerType = "INVESTOR";
+      defaultDescription = "Investor wallet withdrawal";
     }
 
-    const investor = await Investor.findOne({ userId: req.userId }).session(session);
-
-    if (!investor) {
-      throw new Error("Investor not found");
+    if (!walletOwner) {
+      throw new Error("Company or investor wallet owner not found");
     }
 
-    // initialise wallet si absent
-    if (!investor.wallet) {
-      investor.wallet = {
-        balance: Number(0),
-        currency: currencyValue,
-        lockedBalance: Number(0),
-        totalInvested: Number(0),
-        totalReturns: Number(0),
-      };
+    const currentBalance = Number(walletOwner.wallet?.balance?.toString() || 0);
+    const lockedBalance = Number(walletOwner.wallet?.lockedBalance?.toString() || 0);
+    const availableBalance = currentBalance - lockedBalance;
+
+    if (availableBalance < amountValue) {
+      throw new Error("Insufficient available balance");
     }
 
-    const currentBalance = Number(investor.wallet.balance?.toString() || 0);
-    const walletCurrency = investor.wallet.currency || currencyValue;
+    const newBalance = currentBalance - amountValue;
 
-    if (walletCurrency !== currencyValue) {
-      throw new Error(`Wallet currency is ${walletCurrency}, not ${currencyValue}`);
-    }
-
-    const newBalance = currentBalance + netAmount;
-
-    const createdTransactions = await Transaction.create(
+    const transaction = await Transaction.create(
       [
         {
-          transactionNumber: generateTransactionNumber(),
-          type: "DEPOSIT",
+          transactionNumber:
+            "TXN-" + Date.now() + "-" + Math.floor(Math.random() * 1000),
+
+          type: "WITHDRAWAL",
           status: "COMPLETED",
-          senderId: null,
-          senderType: "EXTERNAL",
-          receiverId: investor._id,
-          receiverType: "INVESTOR",
-          amount: Number(amountValue),
-          currency: currencyValue,
-          fee: Number(feeValue),
-          netAmount: Number(netAmount),
+
+          senderId: walletOwner._id,
+          senderType: ownerType,
+
+          receiverId: null,
+          receiverType: "EXTERNAL",
+
+          amount: mongoose.Types.Decimal128.fromString(amountValue.toString()),
+          currency,
+
+          fee: mongoose.Types.Decimal128.fromString("0"),
+          netAmount: mongoose.Types.Decimal128.fromString(amountValue.toString()),
 
           paymentDetails: {
             method: paymentDetails.method,
-            externalReference: paymentDetails.externalReference || null,
-            bankName: paymentDetails.bankName || null,
-            last4: paymentDetails.last4 || null,
-            processorResponse: paymentDetails.processorResponse || null,
+            externalReference: paymentDetails.externalReference || "",
+            bankName: paymentDetails.bankName || "",
+            last4: paymentDetails.last4 || "",
           },
 
-          description: description || "Wallet deposit",
-          notes: notes || null,
-          ipAddress: req.ip || null,
-          userAgent: req.get("user-agent") || null,
+          description: description || defaultDescription,
+          notes: notes || "",
           completedAt: new Date(),
         },
       ],
       { session }
     );
 
-    investor.wallet.balance = Number(newBalance);
-    investor.wallet.currency = walletCurrency;
+    walletOwner.wallet.balance = mongoose.Types.Decimal128.fromString(
+      newBalance.toString()
+    );
 
-    await investor.save({ session });
+    walletOwner.markModified("wallet");
+    await walletOwner.save({ session });
 
     await session.commitTransaction();
     session.endSession();
 
     return res.status(201).json({
-      message: "Deposit completed successfully",
-      wallet: investor.wallet,
-      transaction: createdTransactions[0],
+      message: "Withdrawal completed successfully",
+      ownerType,
+      wallet: walletOwner.wallet,
+      transaction: transaction[0],
     });
   } catch (error) {
     await session.abortTransaction();
@@ -199,15 +232,23 @@ export const depositToWallet = async (req, res) => {
   }
 };
 
-// -------------------- WITHDRAW --------------------
-export const withdrawFromWallet = async (req, res) => {
+
+const generateTransactionNumber = () => {
+  return "TXN-" + Date.now() + "-" + Math.floor(Math.random() * 1000);
+};
+
+const toDecimal128 = (value) => {
+  return mongoose.Types.Decimal128.fromString(Number(value).toString());
+};
+
+// -------------------- DEPOSIT TO WALLET: COMPANY OR INVESTOR --------------------
+export const depositToWallet = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
     const {
       amount,
-      currency = "USD",
       fee = 0,
       description,
       notes,
@@ -216,68 +257,75 @@ export const withdrawFromWallet = async (req, res) => {
 
     const amountValue = Number(amount);
     const feeValue = Number(fee);
-    const currencyValue = String(currency).toUpperCase();
+    const currencyValue = "USD";
 
     if (!Number.isFinite(amountValue) || amountValue <= 0) {
       throw new Error("Amount must be greater than 0");
     }
 
     if (!Number.isFinite(feeValue) || feeValue < 0) {
-      throw new Error("Fee must be a valid number >= 0");
+      throw new Error("Fee must be a valid number greater than or equal to 0");
     }
 
-    if (!paymentDetails.method) {
-      throw new Error("paymentDetails.method is required");
-    }
-
-    const netAmount = amountValue - feeValue;
-
-    if (netAmount < 0) {
+    if (feeValue > amountValue) {
       throw new Error("Fee cannot be greater than amount");
     }
 
-    const investor = await Investor.findOne({ userId: req.userId }).session(session);
-
-    if (!investor) {
-      throw new Error("Investor not found");
+    if (!paymentDetails.method) {
+      throw new Error("Payment method is required");
     }
 
-    if (!investor.wallet) {
-      throw new Error("Wallet not found");
+    let walletOwner = await Company.findOne({ ownerId: req.userId }).session(session);
+    let ownerType = "COMPANY";
+    let defaultDescription = "Company wallet deposit";
+
+    if (!walletOwner) {
+      walletOwner = await Investor.findOne({ userId: req.userId }).session(session);
+      ownerType = "INVESTOR";
+      defaultDescription = "Investor wallet deposit";
     }
 
-    const currentBalance = Number(investor.wallet.balance?.toString() || 0);
-    const walletCurrency = investor.wallet.currency || currencyValue;
-    const lockedBalance = Number(investor.wallet.lockedBalance?.toString() || 0);
+    if (!walletOwner) {
+      throw new Error("Company or investor wallet owner not found");
+    }
+
+    if (!walletOwner.wallet) {
+      walletOwner.wallet = {
+        balance: toDecimal128(0),
+        currency: "USD",
+        lockedBalance: toDecimal128(0),
+        totalInvested: toDecimal128(0),
+        totalReturns: toDecimal128(0),
+      };
+    }
+
+    const currentBalance = Number(walletOwner.wallet.balance?.toString() || 0);
+    const walletCurrency = walletOwner.wallet.currency || "USD";
 
     if (walletCurrency !== currencyValue) {
-      throw new Error(`Wallet currency is ${walletCurrency}, not ${currencyValue}`);
+      throw new Error(`Wallet currency is ${walletCurrency}, not USD`);
     }
 
-    const availableBalance = currentBalance - lockedBalance;
-
-    if (availableBalance < amountValue) {
-      throw new Error("Insufficient available balance");
-    }
-
-    const newBalance = currentBalance - amountValue;
+    const netAmount = amountValue - feeValue;
+    const newBalance = currentBalance + netAmount;
 
     const createdTransactions = await Transaction.create(
       [
         {
           transactionNumber: generateTransactionNumber(),
-          type: "WITHDRAWAL",
+          type: "DEPOSIT",
           status: "COMPLETED",
 
-          senderId: investor._id,
-          senderType: "INVESTOR",
-          receiverId: null,
-          receiverType: "EXTERNAL",
+          senderId: null,
+          senderType: "EXTERNAL",
 
-          amount: Number(amountValue),
+          receiverId: walletOwner._id,
+          receiverType: ownerType,
+
+          amount: toDecimal128(amountValue),
           currency: currencyValue,
-          fee: Number(feeValue),
-          netAmount: Number(netAmount),
+          fee: toDecimal128(feeValue),
+          netAmount: toDecimal128(netAmount),
 
           paymentDetails: {
             method: paymentDetails.method,
@@ -287,7 +335,7 @@ export const withdrawFromWallet = async (req, res) => {
             processorResponse: paymentDetails.processorResponse || null,
           },
 
-          description: description || "Wallet withdrawal",
+          description: description || defaultDescription,
           notes: notes || null,
           ipAddress: req.ip || null,
           userAgent: req.get("user-agent") || null,
@@ -297,16 +345,19 @@ export const withdrawFromWallet = async (req, res) => {
       { session }
     );
 
-    investor.wallet.balance = Number(newBalance);
+    walletOwner.wallet.balance = toDecimal128(newBalance);
+    walletOwner.wallet.currency = "USD";
 
-    await investor.save({ session });
+    walletOwner.markModified("wallet");
+    await walletOwner.save({ session });
 
     await session.commitTransaction();
     session.endSession();
 
     return res.status(201).json({
-      message: "Withdrawal completed successfully",
-      wallet: investor.wallet,
+      message: "Deposit completed successfully",
+      ownerType,
+      wallet: walletOwner.wallet,
       transaction: createdTransactions[0],
     });
   } catch (error) {
