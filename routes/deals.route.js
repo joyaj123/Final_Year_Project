@@ -22,9 +22,8 @@ import { checkApproved } from "../middlewar/company.middlewar.js";
 router.get("/activedeals", authMiddleware,roleMiddleware("INVESTOR"), getActiveDeals); //for investor 
 router.post("/createDeal", authMiddleware, roleMiddleware("BUSINESS_OWNER"), checkApproved,createDeal);
 router.put("/:id/decision",authMiddleware,roleMiddleware("ADMIN"),updateDealStatus);
-router.post("/invest", authMiddleware,roleMiddleware("INVESTOR"),investInDeal);
 router.get("/mydeals", authMiddleware, getCompanyDeals);
-
+router.post("/:id/invest",authMiddleware,roleMiddleware("INVESTOR"),investInDeal);
 
 // Routes (usually for admins)
 router.post("/", postDeal);
