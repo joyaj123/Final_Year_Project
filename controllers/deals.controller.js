@@ -270,8 +270,20 @@ export const getDealById = async (dealId) => {
 
   return deal;
 };
+export const toNumber = (value) => {
+  if (value === undefined || value === null) return 0;
 
-// 2. Validate investment
+  if (value.$numberDecimal) {
+    return Number(value.$numberDecimal);
+  }
+
+  if (typeof value.toString === "function") {
+    return Number(value.toString());
+  }
+
+  return Number(value) || 0;
+};
+
 export const validateInvestment = async ({ deal, amount }) => {
   if (deal.status !== "OPEN") {
     throw new Error("Deal is not open for investment");
@@ -281,12 +293,30 @@ export const validateInvestment = async ({ deal, amount }) => {
     throw new Error("Deal is not approved");
   }
 
-  const minInvestment = Number(deal.investmentTerms?.minInvestment || 0);
+  if (!amount || Number(amount) <= 0) {
+    throw new Error("Invalid investment amount");
+  }
+
+  const minInvestment = toNumber(deal.investmentTerms?.minInvestment);
+
   const maxInvestment = deal.investmentTerms?.maxInvestment
-    ? Number(deal.investmentTerms.maxInvestment)
+    ? toNumber(deal.investmentTerms.maxInvestment)
     : null;
 
-  const remainingAmount = Number(deal.fundingProgress?.remainingAmount || 0);
+  const targetRaise = toNumber(deal.investmentTerms?.targetRaise);
+  const amountRaised = toNumber(deal.fundingProgress?.amountRaised);
+
+  const remainingAmount = Math.max(targetRaise - amountRaised, 0);
+
+  console.log("INVESTMENT CHECK:", {
+    amount,
+    minInvestment,
+    maxInvestment,
+    targetRaise,
+    amountRaised,
+    remainingAmount,
+    storedRemainingAmount: deal.fundingProgress?.remainingAmount,
+  });
 
   if (amount < minInvestment) {
     throw new Error(`Minimum investment is ${minInvestment}`);
@@ -464,14 +494,15 @@ export const createOrUpdateOwnership = async ({
 };
 
 // 7. Update deal funding
-export const updateDealFunding = async ({ deal, amount, session }) => {
-  const currentAmountRaised = Number(deal.fundingProgress?.amountRaised || 0);
+  export const updateDealFunding = async ({ deal, amount, session }) => {
+  const currentAmountRaised = toNumber(deal.fundingProgress?.amountRaised);
   const currentInvestorCount = Number(deal.fundingProgress?.investorCount || 0);
-  const targetRaise = Number(deal.investmentTerms?.targetRaise || 0);
+  const targetRaise = toNumber(deal.investmentTerms?.targetRaise);
 
-  const newAmountRaised = currentAmountRaised + amount;
-  const newRemainingAmount = targetRaise - newAmountRaised;
-  const newPercentageRaised = (newAmountRaised / targetRaise) * 100;
+  const newAmountRaised = currentAmountRaised + Number(amount);
+  const newRemainingAmount = Math.max(targetRaise - newAmountRaised, 0);
+  const newPercentageRaised =
+    targetRaise > 0 ? (newAmountRaised / targetRaise) * 100 : 0;
 
   deal.fundingProgress.amountRaised = newAmountRaised;
   deal.fundingProgress.remainingAmount = newRemainingAmount;
@@ -482,12 +513,11 @@ export const updateDealFunding = async ({ deal, amount, session }) => {
     deal.status = "FUNDED";
     deal.closedAt = new Date();
 
-    await releaseFundsToCompany({ deal, session }); ////////// ADD THIS
-
+    await releaseFundsToCompany({ deal, session });
   }
 
-  
   await deal.save({ session });
+
   return deal;
 };
 
@@ -618,7 +648,7 @@ export const investInDeal = async (req, res) => {
 
     const result = await executeInvestment({
       investorId: investor._id,
-      dealId: req.body.dealId,
+      dealId: req.params.id,
       amount: Number(req.body.amount),
       paymentDetails: req.body.paymentDetails,
     });
