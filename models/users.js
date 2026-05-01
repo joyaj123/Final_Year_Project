@@ -10,11 +10,7 @@ const userSchema = new mongoose.Schema({
     enum: ["INVESTOR", "BUSINESS_OWNER", "ADMIN", "SUPER_ADMIN"], 
     required: true 
   },
-  status: { 
-    type: String, 
-    enum: ["PENDING", "ACTIVE", "SUSPENDED", "DEACTIVATED"],  //done
-    required: true 
-  },
+ 
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 

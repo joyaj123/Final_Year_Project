@@ -16,9 +16,11 @@ import {
   getCompanyDeals
 } from "../controllers/deals.controller.js";
 
+import { checkApproved } from "../middlewar/company.middlewar.js";
+
 //specific route deyman fo2 al crud 
 router.get("/activedeals", authMiddleware,roleMiddleware("INVESTOR"), getActiveDeals); //for investor 
-router.post("/createDeal", authMiddleware, roleMiddleware("BUSINESS_OWNER"), createDeal);
+router.post("/createDeal", authMiddleware, roleMiddleware("BUSINESS_OWNER"), checkApproved,createDeal);
 router.put("/:id/decision",authMiddleware,roleMiddleware("ADMIN"),updateDealStatus);
 router.post("/invest", authMiddleware,roleMiddleware("INVESTOR"),investInDeal);
 router.get("/mydeals", authMiddleware, getCompanyDeals);

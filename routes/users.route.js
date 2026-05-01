@@ -1,5 +1,7 @@
 import express from "express";
 import { authMiddleware } from "../middlewar/authMiddlewar.js";
+import { roleMiddleware } from "../middlewar/roleMiddleware.js";
+
 const router = express.Router();
 
 import {
@@ -11,15 +13,18 @@ import {
   loginUser,
   registerUser,
   resetPassword,
-  forgotPassword
+  forgotPassword,
+  getMyProfile
 
 } from "../controllers/users.controller.js";
 
 
 
 //LOGIN AND REGISTER
+router.get("/me", authMiddleware, getMyProfile);
 router.post("/login",loginUser) ; //If someone sends POST /login → run loginUser() 
 router.post("/register",registerUser) ; 
+
 
 //PASSWORD MANAGEMENT
 router.post('/forgot-password', forgotPassword); // send OTP
