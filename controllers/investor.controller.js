@@ -183,3 +183,40 @@ if (!allowedStatuses.includes(investor.kyc?.status)) {
     res.status(500).json({ message: error.message });
   }
 }
+
+
+const decimalToNumber = (value) => {
+  if (value === undefined || value === null) return 0;
+  return Number(value.toString());
+};
+
+export const getInvestorDashboard = async (req, res) => {
+  try {
+    const investor = await Investor.findOne({ userId: req.userId }).select(
+      "wallet"
+    );
+
+    if (!investor) {
+      return res.status(404).json({
+        message: "Investor not found",
+      });
+    }
+
+    const wallet = investor.wallet || {};
+
+    return res.status(200).json({
+      wallet: {
+        balance: decimalToNumber(wallet.balance),
+        currency: wallet.currency || "USD",
+        lockedBalance: decimalToNumber(wallet.lockedBalance),
+        totalInvested: decimalToNumber(wallet.totalInvested),
+        totalReturns: decimalToNumber(wallet.totalReturns),
+      },
+    });
+  } catch (err) {
+    return res.status(500).json({
+      message: "Server error",
+      error: err.message,
+    });
+  }
+};
