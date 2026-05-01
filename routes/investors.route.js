@@ -10,10 +10,12 @@ import {
     updateInvestor,
     deleteInvestor,
     onboarding,
+    getInvestorDashboard,
    reviewKyc} from "../controllers/investor.controller.js";
 
 router.post("/onboarding", authMiddleware, roleMiddleware("INVESTOR"), onboarding);
 router.put("/:id/decision",authMiddleware,roleMiddleware("ADMIN"),reviewKyc);
+router.get("/dashboard", authMiddleware, getInvestorDashboard);
 
 router.get("/", getAllInvestors);
 router.get("/:id", getInvestorById);
