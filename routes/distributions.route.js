@@ -12,9 +12,10 @@ import {
   createDistribution,
   getMyCompanyDistributions
 } from "../controllers/distributions.controller.js";
+import { checkApproved } from "../middlewar/company.middlewar.js";
 
 router.get("/mydistributions" ,authMiddleware,roleMiddleware("BUSINESS_OWNER"), getMyCompanyDistributions) ; 
-router.post("/createdistribution" ,authMiddleware,roleMiddleware("BUSINESS_OWNER"), createDistribution) ; 
+router.post("/createdistribution" ,authMiddleware,roleMiddleware("BUSINESS_OWNER"),checkApproved, createDistribution) ; 
 
 
 router.get("/", getAllDistributions);

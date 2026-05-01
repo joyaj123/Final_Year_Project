@@ -105,10 +105,10 @@ export const loginUser = async (req, res) => {
       return res.status(404).json({ message: "Email not found" });
     }
 
-    // Account status
+    /**  Account status
    if (!allowedStatuses.includes(user.status)) {
    return res.status(403).json({ message: "Account not allowed to log in" });
-   }
+   }**/
 
     // Check if account is locked
     if (user.security.lockedUntil && user.security.lockedUntil > new Date()) {
@@ -277,7 +277,6 @@ export const registerUser = async (req, res) => {
       email,
       passwordHash,
       userType,
-      status: "PENDING",
       profile: { firstName, lastName },
       address: { country }
     });
@@ -326,6 +325,72 @@ export const registerUser = async (req, res) => {
   }
 };
 
+export const getMyProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.userId)
+      .select("-passwordHash -security.resetOTP -security.resetOTPExpiry")
+      .populate("address.country", "name code")
+      .lean();
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    let roleProfile = null;
+
+    // COMPANY
+    if (user.userType === "BUSINESS_OWNER") {
+      const company = await Company.findOne({ ownerId: req.userId }).lean();
+
+      if (company) {
+        user.status = company.status;
+
+        roleProfile = {
+          type: "company",
+          companyName: company.name,
+          registrationNumber: company.registrationNumber,
+          listingType: company.listingType,
+          companyStatus: company.status,
+          incorporationCountry: company.incorporationCountry,
+          walletBalance: company.wallet?.balance?.toString(),
+          walletCurrency: company.wallet?.currency,
+        };
+      }
+    }
+
+    // INVESTOR
+    if (user.userType === "INVESTOR") {
+      const investor = await Investor.findOne({ userId: req.userId }).lean();
+
+      if (investor) {
+        user.status = investor.kyc?.status;
+
+        roleProfile = {
+          type: "investor",
+          investorType: investor.investorType,
+          accreditationStatus: investor.accreditationStatus,
+          kycStatus: investor.kyc?.status,
+          kycLevel: investor.kyc?.level,
+          riskTolerance: investor.riskTolerance,
+          walletBalance: investor.wallet?.balance?.toString(),
+          walletCurrency: investor.wallet?.currency,
+        };
+      }
+    }
+
+    return res.status(200).json({
+      user,
+      roleProfile,
+    });
+  } catch (error) {
+    console.error("Get profile error:", error);
+    return res.status(500).json({
+      message: "Failed to load profile",
+    });
+  }
+};
 
 export {
   getAllUsers,
