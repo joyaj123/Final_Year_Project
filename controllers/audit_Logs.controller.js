@@ -3,10 +3,11 @@ import AuditLogs from "../models/audit_Logs.js";
 //GET AUDIT_LOGS
 export const getAudit_Logs=async(req,res)=>{
     try{
-        const audit_Logs=await AuditLogs.find({});
+        const audit_Logs=await AuditLogs.find({})
+        .sort({timestamp:-1}); //newest to oldest
         res.status(200).json(audit_Logs);
     }catch(error){
-        res.status(200).json({message:error.message});
+        res.status(500).json({message:error.message});
     }
 };
 //GET AUDIT_LOG
