@@ -32,7 +32,6 @@ const dealSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: [
-        "DRAFT",
         "PENDING_REVIEW",
         "OPEN",
         "FUNDED",
@@ -40,7 +39,7 @@ const dealSchema = new mongoose.Schema(
         "CANCELLED",
       ],
       required: true,
-      default: "DRAFT",
+      default: "PENDING_REVIEW",
       index: true,
     },
 
