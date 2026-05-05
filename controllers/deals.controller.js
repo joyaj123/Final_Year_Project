@@ -104,7 +104,7 @@ const deleteDeal = async (req, res) => {
     }
     const before = deal.toObject() ;
     //check if the status is not draft and the admin status is not pending 
-    if(deal.status!== "DRAFT" && deal.adminStatus!== "PENDING"){
+    if(deal.status!== "PENDING_REVIEW" && deal.adminStatus!== "PENDING"){
       return res.status(400).json({message: "Deal has been reviewed"});
     }
     const cleanDecision = decision?.toLowerCase().trim();
@@ -191,10 +191,7 @@ export const getCompanyDeals = async (req, res) => {
     // 3. Get all deals for this company
     const deals = await Deal.find({
       companyId: company._id,
-       status : "OPEN",
-      adminStatus : "APPROVED",
-      "fundingProgress.remainingAmount": { $gt: 0 }
-    })
+      });
 
     // 4. Return data
     res.status(200).json({ deals });
