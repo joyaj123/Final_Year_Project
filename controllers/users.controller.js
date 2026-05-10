@@ -374,6 +374,8 @@ export const getMyProfile = async (req, res) => {
           kycStatus: investor.kyc?.status,
           kycLevel: investor.kyc?.level,
           riskTolerance: investor.riskTolerance,
+          investmentSweetSpotmin: investor.investmentSweetSpot?.min,
+          investmentSweetSpotmax: investor.investmentSweetSpot?.max,
           walletBalance: investor.wallet?.balance?.toString(),
           walletCurrency: investor.wallet?.currency,
         };
