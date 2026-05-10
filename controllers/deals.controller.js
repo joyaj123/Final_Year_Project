@@ -122,7 +122,7 @@ const deleteDeal = async (req, res) => {
       reviewedBy:req.userId,
       reviewedAt: new Date(),
       action: deal.adminStatus,
-      notes: notes || null,
+      notes: notes,
     };
     await deal.save()
      const after ={...deal.toObject()};
