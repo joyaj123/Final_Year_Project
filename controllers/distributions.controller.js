@@ -175,10 +175,19 @@ export const createDistribution = async (req, res) => {
         investor.wallet.balance.toString()
       );
 
+      const currentTotalreturn = parseFloat(
+        investor.wallet.totalInvested.toString()
+
+      );
+
       const newBalance = currentBalance + amount;
+      const newReturn = currentTotalreturn + amount ;
 
       investor.wallet.balance =
         mongoose.Types.Decimal128.fromString(newBalance.toString());
+
+      investor.wallet.totalInvested =
+        mongoose.Types.Decimal128.fromString(newReturn.toString());
 
       investor.markModified("wallet");
       await investor.save();

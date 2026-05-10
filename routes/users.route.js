@@ -14,7 +14,8 @@ import {
   registerUser,
   resetPassword,
   forgotPassword,
-  getMyProfile
+  getMyProfile,
+  logout
 
 } from "../controllers/users.controller.js";
 
@@ -24,6 +25,8 @@ import {
 router.get("/me", authMiddleware, getMyProfile);
 router.post("/login",loginUser) ; //If someone sends POST /login → run loginUser() 
 router.post("/register",registerUser) ; 
+router.post("/logout", logout);
+
 
 
 //PASSWORD MANAGEMENT

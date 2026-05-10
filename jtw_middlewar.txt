@@ -1,0 +1,49 @@
+tokens are for authorization
+so not anyone can access the routes, per example an investor shouldnt have access to the admin dashboard
+the tokens are CREATED in log in , and are used in the others functions. 
+tokens are used for :
+authentication
+authorization
+protecting routes
+identifying users
+
+
+
+middlewar : its for authentication 
+
+Middleware can:
+check authentication
+check user roles
+validate data
+log requests
+modify the request
+
+
+its structure :
+const middleware = (req,res,next) => {
+
+   // do something
+
+   next()
+
+}
+
+
+POST /login
+      ↓
+loginUser controller
+      ↓
+verify email/password
+      ↓
+create JWT token
+      ↓
+send token to frontend
+
+
+request
+   ↓
+authMiddleware
+   ↓
+role middleware
+   ↓
+controller
