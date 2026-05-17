@@ -31,10 +31,6 @@ router.post(
   depositToWallet
 ); ////////// ROUTE
 
-
-router.post("/deposit", authMiddleware, roleMiddleware("INVESTOR"), depositToWallet);
-router.post("/withdraw", authMiddleware, roleMiddleware("INVESTOR"), withdrawFromWallet);
-
 router.get("/", getAllTransactions);
 router.post("/", createTransaction);
 router.get("/:id", getTransactionById);
