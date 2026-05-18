@@ -10,7 +10,7 @@ export const getDashboardStats =async(req,res)=>{
             status:"OPEN",
         });
         const pendingKyc= await Investor.countDocuments(
-            {kycStatus:"IN_PROGRESS"},
+            {"kyc.status":"IN_PROGRESS"},
         );
         const pendingCompanies= await Company.countDocuments({
             status:"PENDING_REVIEW"},
